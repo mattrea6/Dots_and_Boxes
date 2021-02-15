@@ -7,6 +7,7 @@ class Box:
         Args:
             top, bottom, left, right: Line
         """
+        self.completed = False
         self.owner = owner
         self.edges = [top, bottom, left, right]
         self.top = top
@@ -23,10 +24,12 @@ class Box:
         Returns:
             bool
         """
-        if all(self.edges):
-            print("Player {} got a box!".format(player))
-            self.owner = player
-            return True
+        if not self.completed:
+            if all(self.edges):
+                print("Player {} got a box!".format(player))
+                self.owner = player
+                self.completed = True
+                return True
         return False
 
     def __str__(self):

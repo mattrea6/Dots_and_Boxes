@@ -34,6 +34,7 @@ class Game:
             for j in range(self.width-1):
                 # Boxes are constructed with lines in the order [top, bottom, left, right]
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
+        print("Built game grid")
 
     def build_copy(self, copy_grid, copy_boxes):
         """
@@ -67,51 +68,66 @@ class Game:
     def take_turn(self, player, move):
         """
         Takes a turn for a given player. Claims a line.
-        Returns bool for success. True if move is completed successfully.
+        Returns bool for success. True if player secures a box.
         Args:
             player: int
             move: 3-tuple(int)
         Returns:
             bool
         """
-        # Some validation so only real moves can be played.
+        if self.is_legal_move(move):
+            move_results = []
+            # Attempt to claim the line.
+            self.grid[move[0]][move[1]][move[2]].draw(player)
+            # Now check the boxes that share this edge.
+            if move[0] == 0:
+                # Edge cases
+                if move[1] == 0:
+                    move_results.append(self.boxes[move[1]][move[2]].check_completed(player))
+                elif move[1] == self.height-1:
+                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(player))
+                # Middle case
+                else:
+                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(player))
+                    move_results.append(self.boxes[move[1]][move[2]].check_completed(player))
+            else:
+                if move[1] == 0:
+                    move_results.append(self.boxes[move[2]][move[1]].check_completed(player))
+                elif move[1] == self.width-1:
+                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(player))
+                else:
+                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(player))
+                    move_results.append(self.boxes[move[2]][move[1]].check_completed(player))
+            # This will return True if player got a box this move
+            return any(move_results)
+        return False
+
+    def is_legal_move(self, move):
+        """
+        Checks if a certain move is legal.
+        Args:
+            move: 3-tuple(int)
+        Returns:
+            bool
+        """
+        # Check if move is within grid bounds
         if move[0] == 0:
-            if move[1] > self.height or move[2] >= self.width:
+            if 0 > move[1] > self.height or 0 > move[2] >= self.width:
                 print("Invalid move")
                 return False
         elif move[0] == 1:
-            if move[1] > self.width or move[2] >= self.height:
+            if 0 > move[1] > self.width or 0 > move[2] >= self.height:
                 print("Invalid move")
                 return False
         else:
             print("Invalid move")
             return False
 
-        # Attempt to claim the line.
-        if self.grid[move[0]][move[1]][move[2]].draw(player):
-            # Now check the boxes that share this edge.
-            if move[0] == 0:
-                # Edge cases
-                if move[1] == 0:
-                    self.boxes[move[1]][move[2]].check_completed(player)
-                elif move[1] == self.height-1:
-                    self.boxes[move[1]-1][move[2]].check_completed(player)
-                # Middle case
-                else:
-                    self.boxes[move[1]-1][move[2]].check_completed(player)
-                    self.boxes[move[1]][move[2]].check_completed(player)
-            else:
-                if move[1] == 0:
-                    self.boxes[move[2]][move[1]].check_completed(player)
-                elif move[1] == self.width-1:
-                    self.boxes[move[2]][move[1]-1].check_completed(player)
-                else:
-                    self.boxes[move[2]][move[1]-1].check_completed(player)
-                    self.boxes[move[2]][move[1]].check_completed(player)
-            return True
-        else:
+        # Check if line has already been claimed
+        if self.grid[move[0]][move[1]][move[2]]:
             print("Line has already been claimed")
             return False
+        return True
 
     def is_finished(self):
         """
@@ -121,16 +137,16 @@ class Game:
         """
         for i in range(self.height-1):
             for j in range(self.width-1):
-                if not grid[i][j]:
+                if not self.boxes[i][j]:
                     return False
         return True
 
-
-    def check_scores(self):
+    def print_scores(self):
         """
         Print the scores for all players that have any score.
         Also print number of unclaimed boxes.
         """
+        print("Scores: ")
         scores = {0:0}
         for i in range(self.height-1):
             for j in range(self.width-1):
@@ -157,6 +173,24 @@ class Game:
                 if self.boxes[i][j].owner == player:
                     score += 1
         return score
+
+    def winner(self):
+        """
+        If the game is finished, find the winner.
+        """
+        if self.is_finished():
+            scores = {}
+            for i in range(self.height-1):
+                for j in range(self.width-1):
+                    owner = self.boxes[i][j].owner
+                    if owner in scores:
+                        scores[owner] += 1
+                    else:
+                        scores[owner] = 1
+            return(max(scores, key=scores.get))
+        print("Game is not yet finished!")
+        return 0
+
 
     def print_grid(self):
         """
