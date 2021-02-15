@@ -12,6 +12,8 @@ class Game:
         """
         self.width = width
         self.height = height
+        self.currentPlayer = 1
+        self.maxPlayers = 2
         if copy_grid is None and copy_boxes is None:
             self.build_game()
         else:
@@ -33,6 +35,7 @@ class Game:
         for i in range(self.height-1):
             for j in range(self.width-1):
                 # Boxes are constructed with lines in the order [top, bottom, left, right]
+                ## TODO. THIS NEEDS TO BE CHANGED. Currently only handles square grids.
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
         print("Built game grid")
 
@@ -65,9 +68,9 @@ class Game:
         """
         return Game(self.width, self.height, self.grid, self.boxes)
 
-    def take_turn(self, player, move):
+    def take_turn(self, move):
         """
-        Takes a turn for a given player. Claims a line.
+        Takes a turn for next player. Claims a line.
         Returns bool for success. True if player secures a box.
         Args:
             player: int
@@ -78,28 +81,31 @@ class Game:
         if self.is_legal_move(move):
             move_results = []
             # Attempt to claim the line.
-            self.grid[move[0]][move[1]][move[2]].draw(player)
+            self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
             # Now check the boxes that share this edge.
             if move[0] == 0:
                 # Edge cases
                 if move[1] == 0:
-                    move_results.append(self.boxes[move[1]][move[2]].check_completed(player))
+                    move_results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
                 elif move[1] == self.height-1:
-                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(player))
+                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
                 # Middle case
                 else:
-                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(player))
-                    move_results.append(self.boxes[move[1]][move[2]].check_completed(player))
+                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
+                    move_results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
             else:
                 if move[1] == 0:
-                    move_results.append(self.boxes[move[2]][move[1]].check_completed(player))
+                    move_results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
                 elif move[1] == self.width-1:
-                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(player))
+                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
                 else:
-                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(player))
-                    move_results.append(self.boxes[move[2]][move[1]].check_completed(player))
+                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
+                    move_results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
             # This will return True if player got a box this move
-            return any(move_results)
+            if not any(move_results):
+                self.currentPlayer += 1
+                if self.currentPlayer > self.maxPlayers:
+                    self.currentPlayer = 1
         return False
 
     def is_legal_move(self, move):
@@ -112,11 +118,11 @@ class Game:
         """
         # Check if move is within grid bounds
         if move[0] == 0:
-            if 0 > move[1] > self.height or 0 > move[2] >= self.width:
+            if 0 > move[1] > self.height-1 or 0 > move[2] >= self.width-1:
                 print("Invalid move")
                 return False
         elif move[0] == 1:
-            if 0 > move[1] > self.width or 0 > move[2] >= self.height:
+            if 0 > move[1] > self.width-1 or 0 > move[2] >= self.height-1:
                 print("Invalid move")
                 return False
         else:
