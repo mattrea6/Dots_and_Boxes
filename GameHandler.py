@@ -36,8 +36,12 @@ class GameHandler:
     def random_move(self):
         """
         Returns a random legal move.
+        Returns:
+            3-tuple(int)
         """
-        return random.choice(self.game.get_all_legal_moves())
+        move = random.choice(self.game.get_all_legal_moves())
+        print("Making random move ({}, {}, {})".format(move[0], move[1], move[2]))
+        return move
 
 w = int(input("Enter Width: "))
 h = int(input("Enter Height: "))
