@@ -13,6 +13,7 @@ class GameHandler:
         moves are asked for again.
         """
         player = 0
+        print("When playing the game, enter moves in the format \"0 0 0\".")
         while not self.game.is_finished():
             self.game.print_grid()
             self.game.print_scores()
