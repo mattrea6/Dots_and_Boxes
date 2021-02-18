@@ -68,6 +68,14 @@ class Game:
         """
         return Game(self.width, self.height, self.grid, self.boxes)
 
+    def increment_player(self):
+        """
+        Increments the player counter. Wraps around on self.maxPlayers.
+        """
+        self.currentPlayer += 1
+        if self.currentPlayer > self.maxPlayers:
+            self.currentPlayer = 1
+
     def take_turn(self, move):
         """
         Takes a turn for next player. Claims a line.
@@ -82,31 +90,46 @@ class Game:
             move_results = []
             # Attempt to claim the line.
             self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
-            # Now check the boxes that share this edge.
-            if move[0] == 0:
-                # Edge cases
-                if move[1] == 0:
-                    move_results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
-                elif move[1] == self.height-1:
-                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
-                # Middle case
-                else:
-                    move_results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
-                    move_results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
-            else:
-                if move[1] == 0:
-                    move_results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
-                elif move[1] == self.width-1:
-                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
-                else:
-                    move_results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
-                    move_results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
-            # This will return True if player got a box this move
-            if not any(move_results):
-                self.currentPlayer += 1
-                if self.currentPlayer > self.maxPlayers:
-                    self.currentPlayer = 1
+            # Check the boxes associated with the line claimed.
+            if not self.check_boxes_for_line(move):
+                # If no box has been claimed this round, increment the player counter
+                # Otherwise, it is still this player's turn.
+                self.increment_player()
         return False
+
+    def check_boxes_for_line(self, move):
+        """
+        Takes an index for a Line and checks the boxes associated with that line
+        for completion. Assigns boxes to player.
+        Args:
+            move: 3-tuple(int)
+        Returns:
+            bool: True if box is claimed, False if not.
+        """
+        # Make a list for the results as there could be 1 or 2.
+        results = []
+        if move[0] == 0:
+            # If the Line is on an edge ([1 0 0], [0 0 0], etc) then it only has one
+            # associated box. Check that box.
+            if move[1] == 0:
+                results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
+            elif move[1] == self.height-1:
+                results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
+            # If the Line is not on the edge, it connects to two boxes. Check both.
+            else:
+                results.append(self.boxes[move[1]-1][move[2]].check_completed(self.currentPlayer))
+                results.append(self.boxes[move[1]][move[2]].check_completed(self.currentPlayer))
+        else:
+            if move[1] == 0:
+                results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
+            elif move[1] == self.width-1:
+                results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
+            else:
+                results.append(self.boxes[move[2]][move[1]-1].check_completed(self.currentPlayer))
+                results.append(self.boxes[move[2]][move[1]].check_completed(self.currentPlayer))
+        # If any boxes were claimed, any(results) will return true.
+        return any(results)
+
 
     def is_legal_move(self, move):
         """
@@ -134,6 +157,25 @@ class Game:
             print("Line has already been claimed")
             return False
         return True
+
+    def get_all_legal_moves(self):
+        """
+        Finds all legal moves that can be made. Returns these as a list.
+        Returns:
+            List[3-tuple(int)]
+        """
+        legal_moves = []
+        o = 0
+        for i in range(self.width):
+            for j in range(self.height-1):
+                if not self.grid[o][i][j]:
+                    legal_moves.append((o, i, j))
+        o = 1
+        for i in range(self.height):
+            for j in range(self.width-1):
+                if not self.grid[o][i][j]:
+                    legal_moves.append((o, i, j))
+        return legal_moves
 
     def is_finished(self):
         """

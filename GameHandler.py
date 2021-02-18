@@ -1,4 +1,5 @@
 from Game import Game
+import random
 
 class GameHandler:
     def __init__(self, width=4, height=4):
@@ -17,14 +18,26 @@ class GameHandler:
             self.game.print_scores()
             player = self.game.currentPlayer
             moveRaw = input("\nPlayer {} enter your move: ".format(player))
-            move = [int(x) for x in moveRaw.split()]
-            while not self.game.is_legal_move(move):
-                moveRaw = input("Player {} enter your move: ".format(player))
+            if "r" in moveRaw:
+                move = self.random_move()
+            else:
                 move = [int(x) for x in moveRaw.split()]
+            while not self.game.is_legal_move(move):
+                moveRaw = input("\nPlayer {} enter your move: ".format(player))
+                if "r" in moveRaw:
+                    move = self.random_move()
+                else:
+                    move = [int(x) for x in moveRaw.split()]
             self.game.take_turn(move)
 
         self.game.print_grid()
         print("Player {} wins!".format(self.game.winner()))
+
+    def random_move(self):
+        """
+        Returns a random legal move.
+        """
+        return random.choice(self.game.get_all_legal_moves())
 
 w = int(input("Enter Width: "))
 h = int(input("Enter Height: "))
