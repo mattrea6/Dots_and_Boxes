@@ -2,7 +2,7 @@ from Box import Box
 from Line import Line
 
 class Game:
-    def __init__(self, width, height, maxPlayers=2, curPlayer=1, copy_grid=None, copy_boxes=None):
+    def __init__(self, width, height, maxPlayers=2, curPlayer=1, legalMoves=False, copy_grid=None, copy_boxes=None):
         """
         Initialise the game with given width and height.
         If grid or boxes are passed, then create a copy of these objects.
@@ -14,6 +14,7 @@ class Game:
         self.height = height
         self.currentPlayer = curPlayer
         self.maxPlayers = maxPlayers
+        self.legalMoves = legalMoves
         if copy_grid is None and copy_boxes is None:
             self.build_game()
         else:
@@ -34,10 +35,10 @@ class Game:
         self.boxes = [[0 for i in range(self.width-1)] for j in range(self.height-1)]
         for i in range(self.height-1):
             for j in range(self.width-1):
-                print("Building box {} {}".format(i,j))
                 # Boxes are constructed with lines in the order [top, bottom, left, right]
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
-        print("Built game grid")
+        # Build a list of all legal moves that can be made
+        self.get_all_legal_moves()
 
     def build_from_copy(self, copy_grid, copy_boxes):
         """
@@ -71,6 +72,7 @@ class Game:
             self.height,
             self.maxPlayers,
             self.currentPlayer,
+            self.legalMoves.copy(),
             self.grid,
             self.boxes)
 
@@ -96,6 +98,8 @@ class Game:
             move_results = []
             # Attempt to claim the line.
             self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
+            # Take the move made out of the list of legal moves.
+            self.legalMoves.remove(move)
             # Check the boxes associated with the line claimed.
             if not self.check_boxes_for_line(move):
                 # If no box has been claimed this round, increment the player counter
@@ -145,43 +149,31 @@ class Game:
         Returns:
             bool
         """
-        # Check if move is within grid bounds
-        if move[0] == 0:
-            if 0 > move[1] > self.height-1 or 0 > move[2] >= self.width-1:
-                print("Invalid move")
-                return False
-        elif move[0] == 1:
-            if 0 > move[1] > self.width-1 or 0 > move[2] >= self.height-1:
-                print("Invalid move")
-                return False
-        else:
-            print("Invalid move")
-            return False
+        return move in self.legalMoves
 
-        # Check if line has already been claimed
-        if self.grid[move[0]][move[1]][move[2]]:
-            print("Line has already been claimed")
-            return False
-        return True
-
-    def get_all_legal_moves(self):
+    def get_all_legal_moves(self, generate=False):
         """
         Finds all legal moves that can be made. Returns these as a list.
         Returns:
             List[3-tuple(int)]
         """
-        legal_moves = []
-        o = 0
-        for i in range(self.width):
-            for j in range(self.height-1):
-                if not self.grid[o][i][j]:
-                    legal_moves.append((o, i, j))
-        o = 1
-        for i in range(self.height):
-            for j in range(self.width-1):
-                if not self.grid[o][i][j]:
-                    legal_moves.append((o, i, j))
-        return legal_moves
+        # When a new Game is instanciated, legalMoves will be False, so this
+        # Will generate a list of all possible legal moves
+        # Once this list has been created, it can be stored and moves that are made
+        # can be removed from the list, preventing this costly move generation.
+        if self.legalMoves is False or generate:
+            self.legalMoves = []
+            o = 0
+            for i in range(self.height):
+                for j in range(self.width-1):
+                    if not self.grid[o][i][j]:
+                        self.legalMoves.append((o, i, j))
+            o = 1
+            for i in range(self.width):
+                for j in range(self.height-1):
+                    if not self.grid[o][i][j]:
+                        self.legalMoves.append((o, i, j))
+        return self.legalMoves
 
     def is_finished(self):
         """
