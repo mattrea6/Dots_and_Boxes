@@ -119,14 +119,34 @@ class GameFrame(QWidget):
                 y = y + self.lineWidth + self.boxSize
             x = x + self.lineWidth + self.boxSize
 
+        # Now build grid of labels to show box owner.
+        self.boxes = [[QLabel("",self) for i in range(self.width-1)] for j in range(self.height-1)]
+        y = topLeftY + self.lineWidth
+        for i in range(self.height-1):
+            x = topLeftX + self.lineWidth
+            for j in range(self.width-1):
+                self.boxes[i][j].resize(self.boxSize, self.boxSize)
+                self.boxes[i][j].move(x, y)
+                x = x + self.lineWidth + self.boxSize
+            y = y + self.lineWidth + self.boxSize
+
+
         self.show()
 
     def update(self):
         """
         Updates the display after each player's turn.
         """
+        # Update turn label
         self.titleLabel.setText("Player {}'s turn!".format(self.game.currentPlayer))
         self.titleLabel.resize(self.titleLabel.sizeHint())
+        # Update grid for numbers
+        for i in range(self.height-1):
+            for j in range(self.width-1):
+                owner = self.game.boxes[i][j].owner
+                if owner != 0:
+                    self.boxes[i][j].setText("{}".format(owner))
+
         if self.game.is_finished():
             winnerStr = "Player {} wins!".format(self.game.winner())
             self.winnerLabel.setText(winnerStr)
