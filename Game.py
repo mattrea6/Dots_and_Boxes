@@ -2,7 +2,7 @@ from Box import Box
 from Line import Line
 
 class Game:
-    def __init__(self, width, height, copy_grid=None, copy_boxes=None):
+    def __init__(self, width, height, maxPlayers=2, curPlayer=1, copy_grid=None, copy_boxes=None):
         """
         Initialise the game with given width and height.
         If grid or boxes are passed, then create a copy of these objects.
@@ -12,12 +12,12 @@ class Game:
         """
         self.width = width
         self.height = height
-        self.currentPlayer = 1
-        self.maxPlayers = 2
+        self.currentPlayer = curPlayer
+        self.maxPlayers = maxPlayers
         if copy_grid is None and copy_boxes is None:
             self.build_game()
         else:
-            self.build_copy(copy_grid, copy_boxes)
+            self.build_from_copy(copy_grid, copy_boxes)
 
     def build_game(self):
         """
@@ -39,9 +39,9 @@ class Game:
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
         print("Built game grid")
 
-    def build_copy(self, copy_grid, copy_boxes):
+    def build_from_copy(self, copy_grid, copy_boxes):
         """
-        Builds a game board with copied values.
+        Builds a game board from copied values.
         Args:
             copy_grid: List[][][Line]
             copy_boxes: List[][Box]
@@ -66,7 +66,13 @@ class Game:
         Returns:
             Game
         """
-        return Game(self.width, self.height, self.grid, self.boxes)
+        return Game(
+            self.width,
+            self.height,
+            self.maxPlayers,
+            self.currentPlayer,
+            self.grid,
+            self.boxes)
 
     def increment_player(self):
         """
