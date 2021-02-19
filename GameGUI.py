@@ -9,11 +9,13 @@ class StartFrame(QWidget):
 
     def __init__(self):
         super().__init__()
-
         self.initUI()
 
-
     def initUI(self):
+        """
+        Simple start window that asks for game options.
+        Has a button that launches the game window.
+        """
         self.setWindowTitle("Dots and Boxes")
         self.setGeometry(200, 200, 600, 450)
         # Title label
@@ -54,6 +56,9 @@ class StartFrame(QWidget):
 class GameFrame(QWidget):
 
     def __init__(self, width, height):
+        """
+        GameFrame is a QWidget that can also hold and read a Game instance
+        """
         super().__init__()
         self.width = width
         self.height = height
@@ -64,6 +69,11 @@ class GameFrame(QWidget):
 
 
     def initUI(self):
+        """
+        Initialise the UI. Set up the window, turn and winner text labels.
+        Set up the grid of lines as buttons that can be clicked, and set the boxes
+        as labels with no value.
+        """
         self.setWindowTitle("Dots and Boxes")
         self.setGeometry(200, 200, 600, 450)
 
@@ -71,9 +81,8 @@ class GameFrame(QWidget):
         self.titleLabel.resize(self.titleLabel.sizeHint())
         self.titleLabel.move(100, 50)
 
-        self.winnerLabel = QLabel("winner", self)
+        self.winnerLabel = QLabel("", self)
         self.winnerLabel.resize(self.winnerLabel.sizeHint())
-        self.winnerLabel.move(800, 800)
 
         # Build board.
         # Lists of buttons?
@@ -103,9 +112,11 @@ class GameFrame(QWidget):
                 self.buttonGrid[o][i][j].value = (o, i, j)
                 # Set the callback function
                 self.buttonGrid[o][i][j].clicked.connect(self.lineClicked)
+                # Adjust the offsets for next button
                 x = x + self.lineWidth + self.boxSize
             y = y + self.lineWidth + self.boxSize
 
+        # now do it again for the verticals
         o = 1
         x = topLeftX
         for i in range(self.width):
@@ -120,6 +131,7 @@ class GameFrame(QWidget):
             x = x + self.lineWidth + self.boxSize
 
         # Now build grid of labels to show box owner.
+        # Labels are initially empty strings, updated in update()
         self.boxes = [[QLabel("",self) for i in range(self.width-1)] for j in range(self.height-1)]
         y = topLeftY + self.lineWidth
         for i in range(self.height-1):
@@ -130,7 +142,6 @@ class GameFrame(QWidget):
                 x = x + self.lineWidth + self.boxSize
             y = y + self.lineWidth + self.boxSize
 
-
         self.show()
 
     def update(self):
@@ -140,13 +151,14 @@ class GameFrame(QWidget):
         # Update turn label
         self.titleLabel.setText("Player {}'s turn!".format(self.game.currentPlayer))
         self.titleLabel.resize(self.titleLabel.sizeHint())
-        # Update grid for numbers
+        # Update grid for box numbers
         for i in range(self.height-1):
             for j in range(self.width-1):
                 owner = self.game.boxes[i][j].owner
                 if owner != 0:
                     self.boxes[i][j].setText("{}".format(owner))
 
+        # If the game is finished, set the winner label
         if self.game.is_finished():
             winnerStr = "Player {} wins!".format(self.game.winner())
             self.winnerLabel.setText(winnerStr)
@@ -185,9 +197,7 @@ def main():
 
     app = QApplication(sys.argv)
     ex = StartFrame()
-    #a = GameFrame(6, 6)
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()
