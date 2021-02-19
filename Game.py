@@ -105,6 +105,9 @@ class Game:
                 # If no box has been claimed this round, increment the player counter
                 # Otherwise, it is still this player's turn.
                 self.increment_player()
+        if self.is_finished():
+            self.finish_game()
+
         return False
 
     def check_boxes_for_line(self, move):
@@ -181,11 +184,16 @@ class Game:
         Returns:
             bool
         """
-        for i in range(self.height-1):
-            for j in range(self.width-1):
-                if not self.boxes[i][j]:
-                    return False
-        return True
+        return len(self.legalMoves) == 0
+
+    def finish_game(self):
+        """
+        Function called when the game is finished. Declares a winner.
+        """
+        scores = [self.check_score(x) for x in range(1, self.maxPlayers+1)]
+        print("Game Finished!")
+        print("The winner is player {}, with {} boxes!".format(scores.index(max(scores))+1, max(scores)))
+
 
     def print_scores(self):
         """
