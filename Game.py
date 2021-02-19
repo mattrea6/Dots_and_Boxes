@@ -25,8 +25,8 @@ class Game:
         """
         # Build two lists of horizontal and vertical lines.
         self.grid = [
-            [[Line() for j in range(self.height-1)] for i in range(self.width)],
-            [[Line() for j in range(self.width-1)] for i in range(self.height)]
+            [[Line() for j in range(self.width-1)] for i in range(self.height)],
+            [[Line() for j in range(self.height-1)] for i in range(self.width)]
         ]
         # This means grid[0][0][0] is the top left horizontal line
         # grid[1][0][0] is the top left vertical line
@@ -34,8 +34,8 @@ class Game:
         self.boxes = [[0 for i in range(self.width-1)] for j in range(self.height-1)]
         for i in range(self.height-1):
             for j in range(self.width-1):
+                print("Building box {} {}".format(i,j))
                 # Boxes are constructed with lines in the order [top, bottom, left, right]
-                ## TODO. THIS NEEDS TO BE CHANGED. Currently only handles square grids.
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
         print("Built game grid")
 
