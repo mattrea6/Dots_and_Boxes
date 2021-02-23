@@ -127,7 +127,7 @@ class GameFrame(QWidget):
         Args:
             width: int
             height: int
-            players: List[Player]
+            players: List[PlayerBase]
         """
         super().__init__()
         self.players = players
@@ -195,7 +195,7 @@ class GameFrame(QWidget):
                 # Set the callback function
                 self.buttonGrid[o][i][j].clicked.connect(self.lineClicked)
                 # Disable the button so it can't be clicked when it shouldn't
-                self.buttonGrid[o][i][j].setEnabled(True)
+                self.buttonGrid[o][i][j].setEnabled(False)
                 # Adjust the offsets for next button
                 x = x + self.lineWidth + self.boxSize
             y = y + self.lineWidth + self.boxSize
@@ -211,7 +211,7 @@ class GameFrame(QWidget):
                 self.buttonGrid[o][i][j].setToolTip('{} {} {}'.format(o,i,j))
                 self.buttonGrid[o][i][j].value = (o, i, j)
                 self.buttonGrid[o][i][j].clicked.connect(self.lineClicked)
-                self.buttonGrid[o][i][j].setEnabled(True)
+                self.buttonGrid[o][i][j].setEnabled(False)
                 y = y + self.lineWidth + self.boxSize
             x = x + self.lineWidth + self.boxSize
 
@@ -256,7 +256,7 @@ class GameFrame(QWidget):
             #print("Button {} enabled? - {}".format(move, self.buttonGrid[move[0]][move[1]][move[2]].isEnabled()))
 
 
-    def update(self):
+    def updateGame(self):
         """
         Updates the display after each player's turn.
         """
@@ -270,7 +270,7 @@ class GameFrame(QWidget):
                 if owner != 0:
                     self.boxes[i][j].setText("{}".format(owner))
                     self.boxes[i][j].setStyleSheet("background-color: {}".format(self.players[owner-1].colour))
-
+        self.repaint()
         # If the game is finished, set the winner label
         if self.game.is_finished():
             winnerStr = "Player {} wins!".format(self.game.winner())
@@ -306,7 +306,7 @@ class GameFrame(QWidget):
             button.setStyleSheet("background-color: {}".format(self.p2Colour))
         # Then send the move to the game
         self.game.take_turn(move)
-        self.update()
+        self.updateGame()
 
     def disableAllButtons(self):
         """

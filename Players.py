@@ -1,4 +1,5 @@
 import random
+import time
 
 class PlayerFactory:
     """
@@ -46,8 +47,15 @@ class RandomPlayer(PlayerBase):
     """
     def chooseMove(self, game):
         """
+        Chooses a move for the player by calling random move.
+        """
+        return self.randomMove(game)
+
+    def randomMove(self, game):
+        """
         Get list of legal moves and return any random one.
         """
+        time.sleep(0.5)
         return random.choice(game.get_all_legal_moves())
 
     def isHuman(self):
