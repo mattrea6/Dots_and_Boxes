@@ -1,14 +1,16 @@
 import sys
 from PyQt5.QtWidgets import (QWidget, QToolTip,
-    QPushButton, QApplication, QLabel, QSpinBox)
+    QPushButton, QApplication, QLabel, QSpinBox, QComboBox)
 from PyQt5.QtGui import QFont
 from Game import Game
+import Players
 
 
 class StartFrame(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.playerFactory = Players.PlayerFactory()
         self.initUI()
 
     def initUI(self):
@@ -28,38 +30,68 @@ class StartFrame(QWidget):
         instLabel.move(100, 65)
         # Input for size
         # Two number input boxes
+        widthLabel = QLabel("Width:", self)
+        widthLabel.resize(widthLabel.sizeHint())
+        widthLabel.move(100, 103)
         self.widthInput = QSpinBox(self)
         self.widthInput.resize(self.widthInput.sizeHint())
-        self.widthInput.move(100, 100)
+        self.widthInput.move(150, 100)
         self.widthInput.setRange(3, 10)
+
+        heightLabel = QLabel("Height:", self)
+        heightLabel.resize(heightLabel.sizeHint())
+        heightLabel.move(100, 123)
         self.heightInput = QSpinBox(self)
         self.heightInput.resize(self.heightInput.sizeHint())
-        self.heightInput.move(100, 120)
+        self.heightInput.move(150, 120)
         self.heightInput.setRange(3, 10)
 
-        #Input for players?
-        #blank for now. Dropdowns later? with factory values
+        #Input for players. Dropdowns filled with values from factory
+        playerOneLabel = QLabel("Player One:", self)
+        playerOneLabel.resize(playerOneLabel.sizeHint())
+        playerOneLabel.move(100, 183)
+        self.playerOneDropdown = QComboBox(self)
+        self.playerOneDropdown.resize(100, 20)
+        self.playerOneDropdown.move(170, 180)
+
+        playerTwoLabel = QLabel("Player Two:", self)
+        playerTwoLabel.resize(playerTwoLabel.sizeHint())
+        playerTwoLabel.move(100, 203)
+        self.playerTwoDropdown = QComboBox(self)
+        self.playerTwoDropdown.resize(100, 20)
+        self.playerTwoDropdown.move(170, 200)
+        for player in self.playerFactory.playerTypes:
+            self.playerOneDropdown.addItem(player)
+            self.playerTwoDropdown.addItem(player)
 
         # Button to start game
         startButton = QPushButton('Start Game', self)
         startButton.resize(startButton.sizeHint())
-        startButton.move(100, 200)
+        startButton.move(100, 250)
         startButton.clicked.connect(self.startGame)
 
         self.show()
 
     def startGame(self):
-        self.gf = GameFrame(self.widthInput.value(), self.heightInput.value())
+        playerOne = self.playerFactory.makePlayer(self.playerOneDropdown.currentText(), 1)
+        playerTwo = self.playerFactory.makePlayer(self.playerTwoDropdown.currentText(), 2)
+        players = [playerOne, playerTwo]
+        self.gf = GameFrame(self.widthInput.value(), self.heightInput.value(), players)
         self.close()
 
 
 class GameFrame(QWidget):
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, players):
         """
         GameFrame is a QWidget that can also hold and read a Game instance
+        Args:
+            width: int
+            height: int
+            players: List[Player]
         """
         super().__init__()
+        self.players = players
         self.width = width
         self.height = height
         self.game = Game(width, height)
@@ -74,15 +106,24 @@ class GameFrame(QWidget):
         Set up the grid of lines as buttons that can be clicked, and set the boxes
         as labels with no value.
         """
+        # Set title
         self.setWindowTitle("Dots and Boxes")
         self.setGeometry(200, 200, 600, 450)
 
+        # Set turn label
         self.titleLabel = QLabel("Player 1's turn!", self)
         self.titleLabel.resize(self.titleLabel.sizeHint())
         self.titleLabel.move(100, 50)
 
+        # Create winner label with no text
         self.winnerLabel = QLabel("", self)
         self.winnerLabel.resize(self.winnerLabel.sizeHint())
+
+        # Create Play Again button but do not make visible.
+        self.replayButton = QPushButton("Play Again!", self)
+        self.replayButton.resize(self.replayButton.sizeHint())
+        self.replayButton.move(1000, 1000)
+        self.replayButton.clicked.connect(self.replay)
 
         # Build board.
         # Lists of buttons?
@@ -112,6 +153,8 @@ class GameFrame(QWidget):
                 self.buttonGrid[o][i][j].value = (o, i, j)
                 # Set the callback function
                 self.buttonGrid[o][i][j].clicked.connect(self.lineClicked)
+                # Disable the button so it can't be clicked when it shouldn't
+                self.buttonGrid[o][i][j].setEnabled(False)
                 # Adjust the offsets for next button
                 x = x + self.lineWidth + self.boxSize
             y = y + self.lineWidth + self.boxSize
@@ -127,6 +170,7 @@ class GameFrame(QWidget):
                 self.buttonGrid[o][i][j].setToolTip('{} {} {}'.format(o,i,j))
                 self.buttonGrid[o][i][j].value = (o, i, j)
                 self.buttonGrid[o][i][j].clicked.connect(self.lineClicked)
+                self.buttonGrid[o][i][j].setEnabled(False)
                 y = y + self.lineWidth + self.boxSize
             x = x + self.lineWidth + self.boxSize
 
@@ -143,6 +187,30 @@ class GameFrame(QWidget):
             y = y + self.lineWidth + self.boxSize
 
         self.show()
+
+        self.mainLoop()
+
+    def mainLoop(self):
+        """
+        Main loop run every turn.
+        Decides what happens when a human player or AI Player takes a turn.
+        """
+        currentPlayer = self.players[self.game.currentPlayer-1]
+        if currentPlayer.isHuman():
+            self.humanTurn()
+        else:
+            move = currentPlayer.chooseMove(self.game.get_copy())
+            self.makeMove(move)
+
+    def humanTurn(self):
+        """
+        Logic that the game runs through when a human player is taking their turn.
+        Enables all of the buttons that should be enabled.
+        """
+        # First enable all of the buttons that correspond to legal moves.
+        for move in self.game.get_all_legal_moves():
+            self.buttonGrid[move[0]][move[1]][move[2]].setEnabled(True)
+
 
     def update(self):
         """
@@ -164,25 +232,49 @@ class GameFrame(QWidget):
             self.winnerLabel.setText(winnerStr)
             self.winnerLabel.resize(self.winnerLabel.sizeHint())
             self.winnerLabel.move(200, 50)
+            self.replayButton.move(250, 75)
+        else:
+            self.mainLoop()
 
 
     def lineClicked(self):
         """
         Callback for 'line' buttons. Identifies which button was pressed, and then
         takes the turn for that button.
-        Also makes the button unclickable, and recolours it depending on player.
-        Finally calls update() to update the display.
         """
         sender = self.sender()
-        curPlayer = self.game.currentPlayer
-        self.game.take_turn(sender.value)
-        if curPlayer == 1:
+        self.disableAllButtons()
+        self.makeMove(sender.value)
+
+    def makeMove(self, move):
+        """
+        Makes a move given a player number and a move tuple.
+        """
+        print("Player {} making move {}.".format(self.game.currentPlayer, move))
+        self.game.take_turn(move)
+        sender = self.buttonGrid[move[0]][move[1]][move[2]]
+        if self.game.currentPlayer == 1:
             sender.setStyleSheet("background-color: red")
-        elif curPlayer == 2:
+        elif self.game.currentPlayer == 2:
             sender.setStyleSheet("background-color: blue")
-        sender.setEnabled(False)
         self.update()
 
+    def disableAllButtons(self):
+        """
+        Disables all buttons that are part of the game grid.
+        """
+        o = 0
+        for i in range(self.height):
+            for j in range(self.width-1):
+                self.buttonGrid[o][i][j].setEnabled(False)
+        o = 1
+        for i in range(self.width):
+            for j in range(self.height-1):
+                self.buttonGrid[o][i][j].setEnabled(False)
+
+    def replay(self):
+        self.sf = StartFrame()
+        self.close()
 
 class GameButton(QPushButton):
     """
