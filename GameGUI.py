@@ -229,6 +229,7 @@ class GameFrame(QWidget):
             y = y + self.lineWidth + self.boxSize
 
         self.show()
+        QApplication.processEvents()
         self.mainLoop()
 
     def mainLoop(self):
@@ -270,7 +271,7 @@ class GameFrame(QWidget):
                 if owner != 0:
                     self.boxes[i][j].setText("{}".format(owner))
                     self.boxes[i][j].setStyleSheet("background-color: {}".format(self.players[owner-1].colour))
-        self.repaint()
+        QApplication.processEvents()
         # If the game is finished, set the winner label
         if self.game.is_finished():
             winnerStr = "Player {} wins!".format(self.game.winner())
