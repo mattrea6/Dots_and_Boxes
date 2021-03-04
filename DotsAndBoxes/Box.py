@@ -1,4 +1,7 @@
-import Line
+try:
+    from Line import Line
+except ModuleNotFoundError:
+    from DotsAndBoxes.Line import Line
 
 class Box:
     def __init__(self, top, bottom, left, right, owner=0):

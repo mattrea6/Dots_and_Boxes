@@ -1,5 +1,9 @@
-from Box import Box
-from Line import Line
+try:
+    from Box import Box
+    from Line import Line
+except ModuleNotFoundError:
+    from DotsAndBoxes.Box import Box
+    from DotsAndBoxes.Line import Line
 
 class Game:
     def __init__(self, width, height, maxPlayers=2, curPlayer=1, legalMoves=False, copy_grid=None, copy_boxes=None):
@@ -9,6 +13,11 @@ class Game:
         Args:
             width: int
             height: int
+            maxPlayers: int (2)
+            curPlayer: int (1)
+            legalMoves: List(3-Tuple(int))
+            copy_grid: List[][][Line]
+            copy_boxes: List[][Box]
         """
         self.width = width
         self.height = height
@@ -100,15 +109,18 @@ class Game:
             self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
             # Take the move made out of the list of legal moves.
             self.legalMoves.remove(move)
+            print("Made move {}".format(move))
             # Check the boxes associated with the line claimed.
             if not self.check_boxes_for_line(move):
                 # If no box has been claimed this round, increment the player counter
                 # Otherwise, it is still this player's turn.
                 self.increment_player()
+        else:
+            print("Illegal move {}".format(move))
+
         if self.is_finished():
             self.finish_game()
 
-        return False
 
     def check_boxes_for_line(self, move):
         """
@@ -176,7 +188,7 @@ class Game:
                 for j in range(self.height-1):
                     if not self.grid[o][i][j]:
                         self.legalMoves.append((o, i, j))
-        return self.legalMoves
+        return self.legalMoves.copy()
 
     def is_finished(self):
         """
@@ -195,13 +207,14 @@ class Game:
         print("The winner is player {}, with {} boxes!".format(scores.index(max(scores))+1, max(scores)))
 
 
-    def print_scores(self):
+    def get_scores(self):
         """
-        Print the scores for all players that have any score.
-        Also print number of unclaimed boxes.
+        returns the scores for all players that have any score.
+        Also returns number of unclaimed boxes.
+        Returns:
+            dict{int:int}
         """
-        print("Scores: ")
-        scores = {0:0}
+        scores = {0:0, 1:0, 2:0}
         for i in range(self.height-1):
             for j in range(self.width-1):
                 owner = self.boxes[i][j].owner
@@ -209,9 +222,7 @@ class Game:
                     scores[owner] += 1
                 else:
                     scores[owner] = 1
-        print("Unclaimed Boxes: {}".format(scores.pop(0)))
-        for key, value in scores.items():
-            print("Player {}: {}".format(key, value))
+        return scores
 
     def check_score(self, player):
         """
@@ -233,18 +244,28 @@ class Game:
         If the game is finished, find the winner.
         """
         if self.is_finished():
-            scores = {}
-            for i in range(self.height-1):
-                for j in range(self.width-1):
-                    owner = self.boxes[i][j].owner
-                    if owner in scores:
-                        scores[owner] += 1
-                    else:
-                        scores[owner] = 1
+            scores = self.get_scores()
             return(max(scores, key=scores.get))
         print("Game is not yet finished!")
         return 0
 
+    def save_statistics(self, filename, mode="a+"):
+        """
+        Takes all relevant statistics from the game and saves them to given filename
+        Args:
+            filename: str
+            mode: str
+        """
+        if mode not in ["a", "w", "a+", "w+"]:
+            mode = "a+"
+        scores = self.get_scores()
+        scoresStr = "{}, {}".format(scores[1], scores[2])
+        try:
+            with open(filename, mode) as outfile:
+                outfile.write(scoresStr+"\n")
+        except Exception as e:
+            print("Saving to results file {} failed.".format(filename))
+            #print(e)
 
     def print_grid(self):
         """

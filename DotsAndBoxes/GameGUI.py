@@ -7,7 +7,6 @@ from PyQt5 import QtCore
 from Game import Game
 import Players
 
-
 class StartFrame(QWidget):
     """
     Start frame class includes game options, and can launch the game with these options
@@ -25,7 +24,7 @@ class StartFrame(QWidget):
         Has a button that launches the game window.
         """
         self.setWindowTitle("Dots and Boxes")
-        self.setGeometry(200, 200, 600, 450)
+        self.setGeometry(700, 200, 600, 450)
         # Title label
         titleLabel = QLabel("Dots & Boxes", self)
         titleLabel.resize(titleLabel.sizeHint())
@@ -120,7 +119,7 @@ class StartFrame(QWidget):
 
 class GameFrame(QWidget):
 
-    def __init__(self, width, height, players):
+    def __init__(self, width, height, players, filename=False):
         """
         GameFrame is a QWidget that can also hold and read a Game instance, and a list
         of current players in the game.
@@ -135,6 +134,7 @@ class GameFrame(QWidget):
         self.p2Colour = self.players[1].colour
         self.width = width
         self.height = height
+        self.resultsFilename = filename
         self.game = Game(width, height)
         self.boxSize = 50
         self.lineWidth = 10
@@ -149,7 +149,7 @@ class GameFrame(QWidget):
         """
         # Set title
         self.setWindowTitle("Dots and Boxes")
-        self.setGeometry(200, 200, 600, 450)
+        self.setGeometry(700, 200, 600, 450)
 
         # Set turn label
         self.titleLabel = QLabel("Player 1's turn!", self)
@@ -274,14 +274,19 @@ class GameFrame(QWidget):
         QApplication.processEvents()
         # If the game is finished, set the winner label
         if self.game.is_finished():
+            self.titleLabel.resize(0,0)
             winnerStr = "Player {} wins!".format(self.game.winner())
             self.winnerLabel.setText(winnerStr)
             self.winnerLabel.resize(self.winnerLabel.sizeHint())
             self.winnerLabel.move(200, 50)
             self.replayButton.move(250, 75)
+            # If a results filename has been passed to GameFrame then save the
+            # game stats to this location.
+            if self.resultsFilename:
+                self.game.save_statistics(self.resultsFilename, "a+")
+                self.close()
         else:
             self.mainLoop()
-
 
     def lineClicked(self):
         """
