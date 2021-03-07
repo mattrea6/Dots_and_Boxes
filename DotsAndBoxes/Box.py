@@ -18,6 +18,14 @@ class Box:
         self.left = left
         self.right = right
 
+    def sides_completed(self):
+        """
+        Function that returns how many sides of the 4 have been completed.
+        Returns:
+            int
+        """
+        return sum([bool(x) for x in self.edges])
+
     def check_completed(self, player):
         """
         Checks all owned edges. If all edges are owned, then this box is now owned
@@ -25,11 +33,12 @@ class Box:
         Args:
             player: int
         Returns:
-            bool
+            bool - only returns True if the box was completed on this turn.
+                not if it was previously completed.
         """
         if not self.completed:
             if all(self.edges):
-                print("Player {} got a box!".format(player))
+                #print("Player {} got a box!".format(player))
                 self.owner = player
                 self.completed = True
                 return True

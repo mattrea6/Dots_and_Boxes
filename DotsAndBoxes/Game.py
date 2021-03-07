@@ -6,7 +6,7 @@ except ModuleNotFoundError:
     from DotsAndBoxes.Line import Line
 
 class Game:
-    def __init__(self, width, height, maxPlayers=2, curPlayer=1, legalMoves=False, copy_grid=None, copy_boxes=None):
+    def __init__(self, width, height, maxPlayers=2, curPlayer=1, legalMoves=False, copy_grid=None, copy_boxes=None, movesMade=None):
         """
         Initialise the game with given width and height.
         If grid or boxes are passed, then create a copy of these objects.
@@ -24,6 +24,7 @@ class Game:
         self.currentPlayer = curPlayer
         self.maxPlayers = maxPlayers
         self.legalMoves = legalMoves
+        self.movesMade = movesMade
         if copy_grid is None and copy_boxes is None:
             self.build_game()
         else:
@@ -48,6 +49,7 @@ class Game:
                 self.boxes[i][j] = Box(self.grid[0][i][j], self.grid[0][i+1][j], self.grid[1][j][i], self.grid[1][j+1][i])
         # Build a list of all legal moves that can be made
         self.get_all_legal_moves()
+        self.movesMade = []
 
     def build_from_copy(self, copy_grid, copy_boxes):
         """
@@ -83,7 +85,8 @@ class Game:
             self.currentPlayer,
             self.legalMoves.copy(),
             self.grid,
-            self.boxes)
+            self.boxes,
+            self.movesMade.copy())
 
     def increment_player(self):
         """
@@ -109,7 +112,8 @@ class Game:
             self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
             # Take the move made out of the list of legal moves.
             self.legalMoves.remove(move)
-            print("Made move {}".format(move))
+            self.movesMade.append("{} - {}".format(self.currentPlayer, move))
+            #print("Made move {}".format(move))
             # Check the boxes associated with the line claimed.
             if not self.check_boxes_for_line(move):
                 # If no box has been claimed this round, increment the player counter
@@ -119,7 +123,8 @@ class Game:
             print("Illegal move {}".format(move))
 
         if self.is_finished():
-            self.finish_game()
+            pass
+            #self.finish_game()
 
 
     def check_boxes_for_line(self, move):
@@ -203,8 +208,8 @@ class Game:
         Function called when the game is finished. Declares a winner.
         """
         scores = [self.check_score(x) for x in range(1, self.maxPlayers+1)]
-        print("Game Finished!")
-        print("The winner is player {}, with {} boxes!".format(scores.index(max(scores))+1, max(scores)))
+        #print("Game Finished!")
+        #print("The winner is player {}, with {} boxes!".format(scores.index(max(scores))+1, max(scores)))
 
 
     def get_scores(self):
@@ -246,7 +251,7 @@ class Game:
         if self.is_finished():
             scores = self.get_scores()
             return(max(scores, key=scores.get))
-        print("Game is not yet finished!")
+        #print("Game is not yet finished!")
         return 0
 
     def save_statistics(self, filename, mode="a+"):
@@ -260,8 +265,12 @@ class Game:
             mode = "a+"
         scores = self.get_scores()
         scoresStr = "{}, {}".format(scores[1], scores[2])
+        gameStr = "{}x{}".format(self.width, self.height)
         try:
             with open(filename, mode) as outfile:
+                outfile.write(gameStr+"\n")
+                for line in self.movesMade:
+                    outfile.write(line+"\n")
                 outfile.write(scoresStr+"\n")
         except Exception as e:
             print("Saving to results file {} failed.".format(filename))

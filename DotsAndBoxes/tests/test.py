@@ -32,10 +32,33 @@ class TestGameMethods(unittest.TestCase):
         """
         Test copying a Game and make sure the copy behaves as intended.
         """
+        # Make a game and make some moves but not all of them
         gOriginal = Game.Game(4, 4)
+        for l in gOriginal.get_all_legal_moves()[0:12]:
+            gOriginal.take_turn(l)
+        # Then copy the game
         gCopy = gOriginal.get_copy()
+        # Check that all lines have the same owner.
+        for o in [0,1]:
+            for i in range(3):
+                for j in range(3):
+                    self.assertEqual(gOriginal.grid[o][i][j].owner, gCopy.grid[o][i][j].owner)
+        # Check all boxes have the same owner
+        for i in range(3):
+            for j in range(3):
+                self.assertEqual(gOriginal.boxes[i][j].owner, gCopy.boxes[i][j].owner)
+        # Check some other attributes
+        self.assertEqual(gOriginal.currentPlayer, gCopy.currentPlayer)
+        self.assertEqual(gOriginal.legalMoves, gCopy.legalMoves)
+        self.assertEqual(gOriginal.get_scores(), gCopy.get_scores())
 
-        self.assertEqual(gOriginal.grid, gCopy.grid)
+        # now check that making moves in one does not effect the other.
+        gOriginal.take_turn((1, 2, 2))
+        self.assertEqual(gOriginal.grid[1][2][2].owner, 1)
+        self.assertEqual(gCopy.grid[1][2][2].owner, 0)
+        self.assertEqual(gOriginal.currentPlayer, 2)
+        self.assertEqual(gCopy.currentPlayer, 1)
+
     def test_play_game(self):
         """
         Test creating and playing a game.
@@ -44,16 +67,19 @@ class TestGameMethods(unittest.TestCase):
         This test is only meaningful if test_legal_move_generation and test_game_finished
         pass.
         """
+        # Make a game and get the list of all moves
         g = Game.Game(4, 4)
         legalMoves = g.get_all_legal_moves()
+        # make all of the moves
         for move in legalMoves:
             g.take_turn(move)
 
+        # Assert that the game thinks its finished
         self.assertTrue(g.is_finished())
 
         expectedScores = {0:0, 1:0, 2:9}
         scores = g.get_scores()
-
+        # Assert all of the scores are as expected.
         self.assertEqual(scores, expectedScores)
         self.assertEqual(g.winner(), 2)
 

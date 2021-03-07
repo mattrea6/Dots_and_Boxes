@@ -172,6 +172,7 @@ class ExperimentFrame(QWidget):
         for i in range(self.numTrials.value()):
             self.updateFrame(i, resultsFilename)
             self.gf = GameGUI.GameFrame(width, height, players, resultsFilename)
+        print("Trials finished!")
         #self.close()
 
 
