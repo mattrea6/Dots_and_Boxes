@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QWidget, QToolTip,
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from Game import Game
-import Players
+import PlayerFactory
 
 class StartFrame(QWidget):
     """
@@ -13,7 +13,7 @@ class StartFrame(QWidget):
     """
     def __init__(self):
         super().__init__()
-        self.playerFactory = Players.PlayerFactory()
+        self.playerFactory = PlayerFactory.PlayerFactory()
         self.p1Col = "Red"
         self.p2Col = "Blue"
         self.initUI()
@@ -251,10 +251,9 @@ class GameFrame(QWidget):
         Logic that the game runs through when a human player is taking their turn.
         Enables all of the buttons that should be enabled.
         """
-        # First enable all of the buttons that correspond to legal moves.
+        # Enable all of the buttons that correspond to legal moves.
         for move in self.game.get_all_legal_moves():
             self.buttonGrid[move[0]][move[1]][move[2]].setEnabled(True)
-            #print("Button {} enabled? - {}".format(move, self.buttonGrid[move[0]][move[1]][move[2]].isEnabled()))
 
 
     def updateGame(self):
@@ -269,19 +268,28 @@ class GameFrame(QWidget):
             for j in range(self.width-1):
                 owner = self.game.boxes[i][j].owner
                 if owner != 0:
+                    # This sets the text for owner number and sets box colour.
                     self.boxes[i][j].setText("{}".format(owner))
                     self.boxes[i][j].setStyleSheet("background-color: {}".format(self.players[owner-1].colour))
+        # Force the GUI to update. This is for games with no human player.
         QApplication.processEvents()
         # If the game is finished, set the winner label
         if self.game.is_finished():
+            # Hide title label
             self.titleLabel.resize(0,0)
-            winnerStr = "Player {} wins!".format(self.game.winner())
+            # Update the string that says who won.
+            winner = self.game.winner()
+            if winner == 0:
+                winnerStr = "It's a draw!"
+            else:
+                winnerStr = "Player {} wins!".format(self.game.winner())
+            print(winnerStr)
             self.winnerLabel.setText(winnerStr)
             self.winnerLabel.resize(self.winnerLabel.sizeHint())
             self.winnerLabel.move(200, 50)
             self.replayButton.move(250, 75)
             # If a results filename has been passed to GameFrame then save the
-            # game stats to this location.
+            # game stats to this location and close the frame.
             if self.resultsFilename:
                 self.game.save_statistics(self.resultsFilename, "a+")
                 self.close()

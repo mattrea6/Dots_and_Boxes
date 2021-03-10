@@ -40,7 +40,15 @@ def count_winners(games):
             p2wins += 1
         else:
             draws += 1
-    print("Player 1 won {} times and Player 2 won {} times out of {}.".format(p1wins, p2wins, p1wins+p2wins+draws))
+    if p1wins == 1:
+        p1s = ""
+    else:
+        p1s = "s"
+    if p2wins == 1:
+        p2s = ""
+    else:
+        p2s = "s"
+    print("Player 1 won {} time{} and Player 2 won {} time{} out of {}.".format(p1wins, p1s, p2wins, p2s, p1wins+p2wins+draws))
     if draws == 1:
         was = "was"
         draw = "draw"

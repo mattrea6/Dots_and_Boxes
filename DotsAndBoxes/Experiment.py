@@ -7,7 +7,7 @@ from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from Game import Game
 import GameGUI
-import Players
+import PlayerFactory
 
 class ExperimentFrame(QWidget):
     """
@@ -15,7 +15,7 @@ class ExperimentFrame(QWidget):
     """
     def __init__(self):
         super().__init__()
-        self.playerFactory = Players.PlayerFactory()
+        self.playerFactory = PlayerFactory.PlayerFactory()
         self.p1Col = "Red"
         self.p2Col = "Blue"
         self.initUI()

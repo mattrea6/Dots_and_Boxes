@@ -253,7 +253,12 @@ class Game:
         """
         if self.is_finished():
             scores = self.get_scores()
-            return(max(scores, key=scores.get))
+            if scores[1] == scores[2]:
+                return 0
+            elif scores[1] > scores[2]:
+                return 1
+            else:
+                return 2
         #print("Game is not yet finished!")
         return 0
 
