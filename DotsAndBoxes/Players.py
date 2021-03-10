@@ -111,9 +111,19 @@ class MinimaxPlayer(RandomPlayer):
     """
     Player that implements minimax. Inherits random player for random moves.
     """
-    def __init__(self, playerIndex, colour="red", maxDepth=4):
+    def __init__(self, playerIndex, colour="red", timeLimit=5, maxDepth=10):
+        """
+        Override for Minimax player to include time limit & max depth.
+        This is the time limit given to the player to choose a move, in seconds.
+        Args:
+            playerIndex(int): player index in game
+            colour(str): Colour for the UI to render. Defaults to Red
+            timeLimit(int/float): Time limit in seconds for moves
+            maxDepth(int): Max depth the computer player can reach.
+        """
         self.index = playerIndex
         self.colour = colour
+        self.timeLimit = timeLimit
         self.maxDepth = maxDepth
 
     def chooseMove(self, game):
@@ -123,14 +133,24 @@ class MinimaxPlayer(RandomPlayer):
         moves = game.get_all_legal_moves()
         bestMove = (0, 0, 0)
         bestScore = -10000
-        for move in moves:
-            copyGame = self.makeMove(game, move)
-            score = self.getScore(game, self.maxDepth)
-            # The move that returns the greatest score gets chosen.
-            if score >= bestScore:
-                bestScore = score
-                bestMove = move
-        print("Player {}: Returning move {} with score {}".format(self.index, bestMove, bestScore))
+        currentMaxDepth = 1
+        startTime = time.time()
+        # Search at max depth = 1 initially, and then increment the depth.
+        # Keep incrementing until the time limit has been reached, then return
+        # the best move found so far. This is iterative deepening.
+        while time.time() - startTime <= self.timeLimit and currentMaxDepth <= self.maxDepth:
+            for move in moves:
+                copyGame = self.makeMove(game, move)
+                score = self.getScore(copyGame, currentMaxDepth, -10000, 10000)
+                # The move that returns the greatest score gets chosen.
+                if score >= bestScore:
+                    bestScore = score
+                    bestMove = move
+                # Break if we have reached the end of the time limit.
+                if time.time() - startTime >= self.timeLimit:
+                    break
+            # Increment the current max depth for iterative deepening.
+            currentMaxDepth += 1
 
         # Just in case we picked a bad move. Or no move at all.
         if game.is_legal_move(bestMove):
@@ -138,16 +158,19 @@ class MinimaxPlayer(RandomPlayer):
         else:
             return self.randomMove(game)
 
-    def getScore(self, game, depth):
+    def getScore(self, game, depth, alpha, beta):
         """
-        The recursive part of the minimax algorithm.
+        The recursive part of the mintiimax algorithm.
         This will recursively search the tree to find the scores available at the bottom.
         Args:
-            game: Game
-            depth: int
+            game(Game): game state to branch from.
+            depth(int): current depth of search.
+            alpha(int): alpha value
+            beta(int): beta value
         Returns:
             int
         """
+        # When we're at the bottom of the tree, return
         if depth <= 0 or game.is_finished():
             return self.evaluate(game)
 
@@ -155,13 +178,13 @@ class MinimaxPlayer(RandomPlayer):
         # Store the current player
         currentPlayer = game.currentPlayer
         # set bestScore to either high or low value depending on whose turn it is
-        # also set compare to reference either max or min depending
+        # also set maximise to True or False
         if currentPlayer == self.index:
             bestScore = -10000
-            compare = max
+            maximise = True
         else:
             bestScore = 10000
-            compare = min
+            maximise = False
         for move in moves:
             # Make the move and get the next state of the game.
             copyGame = self.makeMove(game, move)
@@ -169,14 +192,25 @@ class MinimaxPlayer(RandomPlayer):
                 # If the current player hasn't changed then a box was claimed.
                 # Don't increment the depth
                 # This allows the player to see further forward when capturing
+                # but adds a little to the search time.
                 newDepth = depth
             else:
                 newDepth = depth-1
-            # Store all of the possible scores from this position
-            score = self.getScore(copyGame, newDepth)
-            # compare is set to either max or min depending on the current player
-            bestScore = compare(score, bestScore)
-
+            # recursive call
+            score = self.getScore(copyGame, newDepth, alpha, beta)
+            # Different actions depending on wether this is a min node or max node
+            if maximise:
+                bestScore = max(score, bestScore)
+                alpha = max(alpha, bestScore)
+            else:
+                bestScore = min(score, bestScore)
+                beta = min(beta, bestScore)
+                # Alpha - beta pruning.
+                if beta <= alpha:
+                    break
+        #print("Minimax returning {}".format(bestScore))
+        #print("All scores: {}".format(scores))
+        #print("Returning best score: {}".format(bestScore))
         return bestScore
 
     def evaluate(self, game):
@@ -188,11 +222,6 @@ class MinimaxPlayer(RandomPlayer):
             otherIndex = 2
         else:
             otherIndex = 1
-        # if either player have won, immediately return big number
-        if game.winner() == self.index:
-            return 1000
-        elif game.winner() == otherIndex:
-            return -1000
         # If the game hasn't been won yet, the board needs to be evaluated.
         score = 0
         scores = game.get_scores()
@@ -201,7 +230,6 @@ class MinimaxPlayer(RandomPlayer):
         score += 10*scores[self.index]
         # Remove 5 for every box opponent has
         score -= 10*scores[otherIndex]
-
         # If it's our turn next then we want boxes to complete
         if game.currentPlayer == self.index:
             for i in range(game.height-1):
@@ -231,11 +259,17 @@ class MinimaxPlayer(RandomPlayer):
                     # Three sides means they can complete the fourth and get points
                     elif no_sides == 3:
                         score -= 5
+        #print("Eval returning {}".format(score))
         return score
 
     def makeMove(self, game, move):
         """
         Takes a game and a move, copies the game and makes the move in it.
+        Args:
+            game(Game): Game to be played in.
+            move(Tuple[int]): Move to make
+        Returns:
+            Game: Deep copy of Game with move made
         """
         copyGame = game.get_copy()
         copyGame.take_turn(move)
@@ -243,6 +277,6 @@ class MinimaxPlayer(RandomPlayer):
 
     def __str__(self):
         """
-        String representation for a random player. Used for writing results filenames.
+        String representation for minimax player. Used for writing results filenames.
         """
         return "{}_minimax".format(self.index)

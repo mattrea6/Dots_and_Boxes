@@ -41,7 +41,13 @@ def count_winners(games):
         else:
             draws += 1
     print("Player 1 won {} times and Player 2 won {} times out of {}.".format(p1wins, p2wins, p1wins+p2wins+draws))
-    print("There were {} draws.".format(draws))
+    if draws == 1:
+        was = "was"
+        draw = "draw"
+    else:
+        was = "were"
+        draw = "draws"
+    print("There {} {} {}.".format(was, draws, draw))
 
 def get_scores(filename):
     games = get_games(filename)

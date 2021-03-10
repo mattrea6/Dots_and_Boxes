@@ -174,6 +174,9 @@ class Game:
     def get_all_legal_moves(self, generate=False):
         """
         Finds all legal moves that can be made. Returns these as a list.
+        Args:
+            generate(Bool): If True, force the game to make a new list of legal
+                moves
         Returns:
             List[3-tuple(int)]
         """
@@ -306,3 +309,31 @@ class Game:
                             print("|")
                         else:
                             print("¦")
+
+    def __eq__(self, other):
+        """
+        Builtin equality method for seeing if games are equal.
+        Games are equal if they have the same dimensions, all of the lines
+        are owned by the same players and it is the same players turn.
+        """
+        if self.width != other.width:
+            return False
+
+        if self.height != other.height:
+            return False
+
+        if self.currentPlayer != other.currentPlayer:
+            return False
+
+        o = 0
+        for i in range(self.height):
+            for j in range(self.width-1):
+                if self.grid[o][i][j].owner != other.grid[o][i][j].owner:
+                    return False
+        o = 1
+        for i in range(self.width):
+            for j in range(self.height-1):
+                if self.grid[o][i][j].owner != other.grid[o][i][j].owner:
+                    return False
+
+        return True
