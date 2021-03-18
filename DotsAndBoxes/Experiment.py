@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QWidget, QToolTip,
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from Game import Game
+import ReadStatistics
 import GameGUI
 import PlayerFactory
 
@@ -172,7 +173,10 @@ class ExperimentFrame(QWidget):
         for i in range(self.numTrials.value()):
             self.updateFrame(i, resultsFilename)
             self.gf = GameGUI.GameFrame(width, height, players, resultsFilename)
+            print("Current Scores:")
+            ReadStatistics.get_scores(resultsFilename)
         print("Trials finished!")
+        ReadStatistics.get_scores(resultsFilename)
         #self.close()
 
 

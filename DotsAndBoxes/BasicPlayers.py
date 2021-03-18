@@ -54,7 +54,7 @@ class RandomPlayer(PlayerBase):
         """
         Get list of legal moves and return any random one.
         """
-        time.sleep(0.5)
+        #time.sleep(0.25)
         return random.choice(game.get_all_legal_moves())
 
     def isHuman(self):
@@ -76,7 +76,7 @@ class MovesInOrder(PlayerBase):
     Plays all of the legal moves in the order they are returned.
     """
     def chooseMove(self, game):
-        time.sleep(0.3)
+        #time.sleep(0.3)
         return game.get_all_legal_moves()[0]
 
     def __str__(self):

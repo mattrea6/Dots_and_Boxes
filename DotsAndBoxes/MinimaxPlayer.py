@@ -10,7 +10,7 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
     Minimax algorithm with alpha-beta pruning for speed and iterative deepening
     for a time limit.
     """
-    def __init__(self, playerIndex, colour="red", timeLimit=5, maxDepth=10):
+    def __init__(self, playerIndex, colour="red", timeLimit=0.5, maxDepth=20):
         """
         Override for Minimax player to include time limit & max depth.
         This is the time limit given to the player to choose a move, in seconds.
@@ -27,7 +27,15 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
 
     def chooseMove(self, game):
         """
-        Choose move for minimax player.
+        Choose move for minimax player. This is the start of the search and looks
+        at all moves that can be made by the player right now. Implements
+        iterative deepening.
+        When the time limit is reached, the move with the best score so far is
+        chosen.
+        Args:
+            game(Game): Game that the player is making a move in
+        Returns:
+            3-Tuple[int]: move to be made.
         """
         moves = game.get_all_legal_moves()
         bestMove = (0, 0, 0)
@@ -59,7 +67,7 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
 
     def getScore(self, game, depth, alpha, beta):
         """
-        The recursive part of the mintiimax algorithm.
+        The recursive part of the mintiimax algorithm. Implements alpha-beta pruning.
         This will recursively search the tree to find the scores available at the bottom.
         Args:
             game(Game): game state to branch from.
@@ -69,7 +77,7 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
         Returns:
             int
         """
-        # When we're at the bottom of the tree, return
+        # When we're at the bottom of the tree, return static evaluation
         if depth <= 0 or game.is_finished():
             return self.evaluate(game)
 
@@ -107,27 +115,28 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
                 # Alpha - beta pruning.
                 if beta <= alpha:
                     break
-        #print("Minimax returning {}".format(bestScore))
-        #print("All scores: {}".format(scores))
-        #print("Returning best score: {}".format(bestScore))
         return bestScore
 
     def evaluate(self, game):
         """
-        Evaluate a particular game state. Get a static score
+        Evaluate a particular game state. Get a static score.
+        Args:
+            game(Game): Game state to evaluate
+        Returns:
+            int: score calculated from game state.
         """
         # Find our own index and the other players
         if self.index == 1:
             otherIndex = 2
         else:
             otherIndex = 1
-        # If the game hasn't been won yet, the board needs to be evaluated.
         score = 0
         scores = game.get_scores()
         ## TODO - MAKE THIS BETTER
-        # Add 5 points for every box player has
+        ## SUGGESTION - COUNT CAPTURED BOXES. IF IT'S GREATER THAN HALF, RETURN WIN
+        # Add 10 points for every box player has
         score += 10*scores[self.index]
-        # Remove 5 for every box opponent has
+        # Remove 10 for every box opponent has
         score -= 10*scores[otherIndex]
         # If it's our turn next then we want boxes to complete
         if game.currentPlayer == self.index:
@@ -158,7 +167,6 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
                     # Three sides means they can complete the fourth and get points
                     elif no_sides == 3:
                         score -= 5
-        #print("Eval returning {}".format(score))
         return score
 
     def makeMove(self, game, move):

@@ -1,9 +1,11 @@
 try:
     from BasicPlayers import *
     from MinimaxPlayer import MinimaxPlayer
+    from MonteCarloPlayer import MonteCarloPlayer
 except ModuleNotFoundError:
     from DotsAndBoxes.BasicPlayers import *
     from DotsAndBoxes.MinimaxPlayer import MinimaxPlayer
+    from DotsAndBoces.MonteCarloPlayer import MonteCarloPlayer
 import random
 import time
 
@@ -13,7 +15,7 @@ class PlayerFactory:
     corresponding player instances.
     """
     def __init__(self):
-        self.playerTypes = ["Human Player", "Random Player", "In order player", "Minimax Player"]
+        self.playerTypes = ["Human Player", "Random Player", "In order player", "Minimax Player", "Monte Carlo Player"]
 
     def makePlayer(self, playerType, index, colour):
         """
@@ -31,3 +33,5 @@ class PlayerFactory:
             return MovesInOrder(index, colour)
         elif playerType == "Minimax Player":
             return MinimaxPlayer(index, colour)
+        elif playerType == "Monte Carlo Player":
+            return MonteCarloPlayer(index, colour)

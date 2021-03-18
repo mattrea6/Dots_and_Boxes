@@ -1,3 +1,5 @@
+import re
+
 def get_games(filename):
     """
     Looks at a results file and turns it into a list of games.
@@ -9,8 +11,11 @@ def get_games(filename):
     """
     with open(filename, "r") as infile:
         lines = infile.readlines()
-    width = int(lines[0][0])
-    height = int(lines[0][2])
+    fnList = filename.split("_")
+    p1name = fnList[1]
+    p2name = fnList[3]
+    width = int(fnList[4][0])
+    height = int(fnList[4][2])
     no_moves = ((width-1)*height + (height-1)*width)+2
     games = []
     start = 0
@@ -19,6 +24,7 @@ def get_games(filename):
         game = lines[start:end]
         games.append(game)
         start, end = end, end+no_moves
+    games.append([p1name, p2name])
     return games
 
 def count_winners(games):
@@ -28,15 +34,17 @@ def count_winners(games):
     Args:
         games(list[][str]): List of games
     """
+    names = games.pop(-1)
     p1wins = 0
     p2wins = 0
     draws = 0
     for game in games:
-        p1score = int(game[-1][0])
-        p2score = int(game[-1][3])
-        if p1score > p2score:
+        scores = [int(s) for s in re.findall(r'\d+', game[-1])]
+        if len(scores) > 2:
+            print("Too many values in list {}".format(scores))
+        if scores[0] > scores[1]:
             p1wins += 1
-        elif p2score > p1score:
+        elif scores[1] > scores[0]:
             p2wins += 1
         else:
             draws += 1
@@ -48,14 +56,17 @@ def count_winners(games):
         p2s = ""
     else:
         p2s = "s"
-    print("Player 1 won {} time{} and Player 2 won {} time{} out of {}.".format(p1wins, p1s, p2wins, p2s, p1wins+p2wins+draws))
-    if draws == 1:
-        was = "was"
-        draw = "draw"
-    else:
-        was = "were"
-        draw = "draws"
-    print("There {} {} {}.".format(was, draws, draw))
+    print("{} player won {} time{} and {} player won {} time{} out of {}.".format(names[0], p1wins, p1s, names[1], p2wins, p2s, p1wins+p2wins+draws))
+    if draws > 0:
+        if draws == 1:
+            was = "was"
+            draw = "draw"
+        else:
+            was = "were"
+            draw = "draws"
+        print("There {} {} {}.".format(was, draws, draw))
+    print("{} player winrate: {}%".format(names[0], 100*p1wins/(p1wins+p2wins+draws)))
+    print("{} player winrate: {}%".format(names[1], 100*p2wins/(p1wins+p2wins+draws)))
 
 def get_scores(filename):
     games = get_games(filename)

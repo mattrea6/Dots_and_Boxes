@@ -306,6 +306,7 @@ class TestGameMethods(unittest.TestCase):
     def test_saving_scores(self):
         """
         Test that scores sent to save files are correctly saved.
+        ##NEEDS UPDATING
         """
         filename = "test.txt"
         g = Game.Game(4, 4)
@@ -314,7 +315,12 @@ class TestGameMethods(unittest.TestCase):
             g.take_turn(m)
         g.save_statistics(filename, "w+")
         with open(filename, "r") as infile:
-            self.assertEqual(infile.readline(), "0, 9\n")
+            lines = infile.readlines()
+
+        self.assertEqual(lines[0], "4x4\n")
+        self.assertEqual(lines[16], "2 - (1, 1, 0)\n")
+        self.assertEqual(lines[19], "2 - (1, 2, 0)\n")
+        self.assertEqual(lines[25], "0, 9\n")
         # Swapping these specific moves makes player 1 win
         l[15], l[18] = l[18], l[15]
         g = Game.Game(4, 4)
@@ -322,5 +328,20 @@ class TestGameMethods(unittest.TestCase):
             g.take_turn(m)
         g.save_statistics(filename, "a+")
         with open(filename, "r") as infile:
-            self.assertEqual(infile.readline(), "0, 9\n")
-            self.assertEqual(infile.readline(), "9, 0\n")
+            lines = infile.readlines()
+
+        self.assertEqual(lines[0], "4x4\n")
+        self.assertEqual(lines[16], "2 - (1, 1, 0)\n")
+        self.assertEqual(lines[19], "2 - (1, 2, 0)\n")
+        self.assertEqual(lines[25], "0, 9\n")
+        self.assertEqual(lines[26], "4x4\n")
+        self.assertEqual(lines[42], "2 - (1, 2, 0)\n")
+        self.assertEqual(lines[45], "1 - (1, 1, 0)\n")
+        self.assertEqual(lines[51], "9, 0\n")
+
+    def test_(self):
+        """
+        TESTS TO CREATE:
+            Test Game Equality
+        """
+        pass
