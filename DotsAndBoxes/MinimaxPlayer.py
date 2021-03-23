@@ -1,7 +1,7 @@
 try:
     import BasicPlayers
 except ModuleNotFoundError:
-    import DotsAndBoxes.BasicPlayers
+    import DotsAndBoxes.BasicPlayers as BasicPlayers
 import time
 
 class MinimaxPlayer(BasicPlayers.RandomPlayer):

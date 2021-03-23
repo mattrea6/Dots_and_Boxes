@@ -9,6 +9,8 @@ from Game import Game
 import ReadStatistics
 import GameGUI
 import PlayerFactory
+import math
+from MonteCarloPlayer import MonteCarloPlayer
 
 class ExperimentFrame(QWidget):
     """
@@ -179,11 +181,48 @@ class ExperimentFrame(QWidget):
         ReadStatistics.get_scores(resultsFilename)
         #self.close()
 
-
 def main(trials=100,height=3,width=3):
     app = QApplication(sys.argv)
     ex = ExperimentFrame()
     sys.exit(app.exec_())
+
+def c_experiment(no_trials=100, timeLimit=2):
+    """
+    Runs an experiment with MonteCarloPlayer, altering the value for c each time.
+    """
+    experiment_filenames = []
+    filename_base = "Results\\1_random_2_monty_3x3_c-{}.txt"
+    playerFactory = PlayerFactory.PlayerFactory()
+    # values from 0 to 5 in increments of 0.1
+    c_values = [x/10 for x in range(0,51)]
+    c_values.append(math.sqrt(2))
+    for c in c_values:
+        # create results file
+        experiment_filename = filename_base.format(c)
+        experiment_filenames.append(experiment_filename)
+        f = open(experiment_filename,"w+")
+        f.close()
+        # create players
+        randomPlayer = playerFactory.makePlayer("Random Player", 1, "red")
+        monteCarloPlayer = MonteCarloPlayer(2, "red", timeLimit, c)
+        players = [randomPlayer, monteCarloPlayer]
+        print("\nStarting trail with c={}".format(c))
+        # run game no_trials amount of times
+        for i in range(no_trials):
+            game = Game(3,3)
+            while not game.is_finished():
+                player = players[game.currentPlayer-1]
+                move = player.chooseMove(game.get_copy())
+                game.take_turn(move)
+            game.save_statistics(experiment_filename, "a+")
+            print("\nCompleted trial {} with c={}.".format(i, c))
+            game.print_grid()
+            ReadStatistics.get_scores(experiment_filename)
+    print("\n\nAll trials completed.")
+    for fn in experiment_filenames:
+        print("\nResults for file: {}".format(fn))
+        ReadStatistics.get_scores(fn)
+
 
 if __name__ == '__main__':
     main()

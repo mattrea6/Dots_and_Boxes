@@ -122,10 +122,6 @@ class Game:
         else:
             print("Illegal move {}".format(move))
 
-        if self.is_finished():
-            pass
-            #self.finish_game()
-
 
     def check_boxes_for_line(self, move):
         """
@@ -177,7 +173,7 @@ class Game:
         TODO: Change the order that moves are returned. Moves are evaluated by
         MinimaxPlayer in the order returned from here. If the moves are returned
         in a 'better' order then alpha-beta pruning will be more effective.
-        'best' order of moves is from the middle outwards as the midle moves
+        'best' order of moves is from the middle outwards as the middle moves
         give player more control over the board.
         Args:
             generate(Bool): If True, force the game to make a new list of legal
@@ -231,10 +227,7 @@ class Game:
         for i in range(self.height-1):
             for j in range(self.width-1):
                 owner = self.boxes[i][j].owner
-                if owner in scores:
-                    scores[owner] += 1
-                else:
-                    scores[owner] = 1
+                scores[owner] += 1
         return scores
 
     def check_score(self, player):
@@ -269,7 +262,11 @@ class Game:
 
     def save_statistics(self, filename, mode="a+"):
         """
-        Takes all relevant statistics from the game and saves them to given filename
+        Takes all relevant statistics from the game and saves them to given filename.
+        Saves -
+            size of board
+            all moves made
+            final score
         Args:
             filename: str
             mode: str

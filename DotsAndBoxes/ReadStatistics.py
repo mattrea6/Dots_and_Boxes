@@ -67,7 +67,31 @@ def count_winners(games):
         print("There {} {} {}.".format(was, draws, draw))
     print("{} player winrate: {}%".format(names[0], 100*p1wins/(p1wins+p2wins+draws)))
     print("{} player winrate: {}%".format(names[1], 100*p2wins/(p1wins+p2wins+draws)))
+    return [p1wins, p2wins, draws]
 
 def get_scores(filename):
     games = get_games(filename)
     count_winners(games)
+
+def compare(filenames):
+    gameset = [get_games(fn) for fn in filenames]
+    results = []
+    for games in gameset:
+        [p1wins, p2wins, draws] = count_winners(games)
+        p1winrate = 100*p1wins/(p1wins+p2wins+draws)
+        p2winrate = 100*p2wins/(p1wins+p2wins+draws)
+        results.append([p1wins, p2wins, draws, p1winrate, p2winrate])
+    p1bestwinrate = 0
+    p1bestwinrateindex = -1
+    p2bestwinrate = 0
+    p2bestwinrateindex = -1
+    for i, result in enumerate(results):
+        if result[3] >= p1bestwinrate:
+            p1bestwinrate = result[3]
+            p1bestwinrateindex = i
+        if result[4] >= p2bestwinrate:
+            p2bestwinrate = result[4]
+            p2bestwinrateindex = i
+
+    print("Best Winrate achieved by p1: {}%\n In results file {}".format(p1bestwinrate, filenames[p1bestwinrateindex]))
+    print("Best Winrate achieved by p2: {}%\n In results file {}".format(p2bestwinrate, filenames[p2bestwinrateindex]))
