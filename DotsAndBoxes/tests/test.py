@@ -1,6 +1,7 @@
 import unittest
 import random
 from DotsAndBoxes import Game
+import DotsAndBoxes.MonteCarloPlayerTwo
 
 class TestGameMethods(unittest.TestCase):
     def test_create_game(self):
@@ -306,7 +307,6 @@ class TestGameMethods(unittest.TestCase):
     def test_saving_scores(self):
         """
         Test that scores sent to save files are correctly saved.
-        ##NEEDS UPDATING
         """
         filename = "test.txt"
         g = Game.Game(4, 4)
@@ -318,8 +318,8 @@ class TestGameMethods(unittest.TestCase):
             lines = infile.readlines()
 
         self.assertEqual(lines[0], "4x4\n")
-        self.assertEqual(lines[16], "2 - (1, 1, 0)\n")
-        self.assertEqual(lines[19], "2 - (1, 2, 0)\n")
+        self.assertEqual(lines[16], "(1, 1, 0)\n")
+        self.assertEqual(lines[19], "(1, 2, 0)\n")
         self.assertEqual(lines[25], "0, 9\n")
         # Swapping these specific moves makes player 1 win
         l[15], l[18] = l[18], l[15]
@@ -331,17 +331,96 @@ class TestGameMethods(unittest.TestCase):
             lines = infile.readlines()
 
         self.assertEqual(lines[0], "4x4\n")
-        self.assertEqual(lines[16], "2 - (1, 1, 0)\n")
-        self.assertEqual(lines[19], "2 - (1, 2, 0)\n")
+        self.assertEqual(lines[16], "(1, 1, 0)\n")
+        self.assertEqual(lines[19], "(1, 2, 0)\n")
         self.assertEqual(lines[25], "0, 9\n")
         self.assertEqual(lines[26], "4x4\n")
-        self.assertEqual(lines[42], "2 - (1, 2, 0)\n")
-        self.assertEqual(lines[45], "1 - (1, 1, 0)\n")
+        self.assertEqual(lines[42], "(1, 2, 0)\n")
+        self.assertEqual(lines[45], "(1, 1, 0)\n")
         self.assertEqual(lines[51], "9, 0\n")
+
+    def test_game_equality(self):
+        """
+        Test that game objects' eq method work correctly.
+        """
+        g1 = Game.Game(3,5)
+        g2 = Game.Game(3,5)
+        g3 = Game.Game(3,5)
+        g4 = Game.Game(5,3)
+        self.assertTrue(g1 == g2)
+        self.assertFalse(g1 == g4)
+        move1 = (1,1,1)
+        move2 = (0,0,0)
+        move3 = (1,0,0)
+        move4 = (0,1,1)
+        #g1 and g2 always have the same moves made so should always be equal
+        g1.take_turn(move1)
+        g2.take_turn(move1)
+        g3.take_turn(move3)
+        # g3 has the same moves made but in a different order, so is not equal yet
+        g1.take_turn(move2)
+        g2.take_turn(move2)
+        g3.take_turn(move4)
+
+        self.assertTrue(g1 == g2)
+        self.assertFalse(g1 == g3)
+
+        g1.take_turn(move3)
+        g2.take_turn(move3)
+        g3.take_turn(move1)
+
+        g1.take_turn(move4)
+        g2.take_turn(move4)
+        g3.take_turn(move2)
+        # at this point the same moves have been made but in different orders.
+        self.assertTrue(g1 == g2)
+        self.assertTrue(g1 == g3)
+
+    def test_monte_carlo_tree(self):
+        """
+        Test the functionality of the Monte Carlo Tree class
+        """
+        mct = DotsAndBoxes.MonteCarloPlayerTwo.MonteCarloTree(1, 0.2)
+        g1 = Game.Game(4,4)
+        g2 = g1.get_copy()
+
+        self.assertIsNone(mct.root)
+        mct.update(g1.get_copy())
+        self.assertIsInstance(mct.root, DotsAndBoxes.MonteCarloPlayerTwo.MonteCarloNode)
+        self.assertTrue(g1 == g2)
+        self.assertTrue(mct.root.game == g1)
+        self.assertTrue(mct.root.game == g2)
+        # get two distinct moves and make them in both games
+        move1 = mct.nextMove()
+        if move1 == (1,1,1):
+            move2 = (0,0,0)
+        else:
+            move2 = (1,1,1)
+        g1.take_turn(move1)
+        g1.take_turn(move2)
+        g2.take_turn(move1)
+        g2.take_turn(move2)
+
+        # test the update and newRoot methods
+        mct.update(g1.get_copy())
+        self.assertEqual(g1, g2)
+        self.assertEqual(mct.root.game, g1)
+        self.assertEqual(mct.root.game, g2)
+        self.assertFalse(mct.root.name == "Root")
+
+    def test_monte_carlo_node(self):
+        """
+        Test monte carlo tree search node functionality.
+        """
+        g1 = Game.Game(4,4)
+        g2 = Game.Game(4,4)
+
+
 
     def test_(self):
         """
         TESTS TO CREATE:
-            Test Game Equality
+        test players?
+            test monte carlo tree functions
         """
         pass

@@ -1,4 +1,5 @@
 import re
+import os
 
 def get_games(filename):
     """
@@ -72,6 +73,20 @@ def count_winners(games):
 def get_scores(filename):
     games = get_games(filename)
     count_winners(games)
+
+
+def get_filenames(dirname):
+    f = []
+    for (dirpath, dirnames, filenames) in os.walk(dirname):
+        f.extend(filenames)
+        break
+    filenames = [dirname+"\\"+x for x in f]
+    return filenames
+
+def compare_folder(dirname):
+    filenames = get_filenames(dirname)
+    compare(filenames)
+
 
 def compare(filenames):
     gameset = [get_games(fn) for fn in filenames]

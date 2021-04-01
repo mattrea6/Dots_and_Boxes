@@ -125,19 +125,18 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
         Returns:
             int: score calculated from game state.
         """
-        # Find our own index and the other players
+        # Find our own index and the other players'
         if self.index == 1:
             otherIndex = 2
         else:
             otherIndex = 1
         score = 0
         scores = game.get_scores()
-        ## TODO - MAKE THIS BETTER
-        ## SUGGESTION - COUNT CAPTURED BOXES. IF IT'S GREATER THAN HALF, RETURN WIN
         # Add 10 points for every box player has
         score += 10*scores[self.index]
         # Remove 10 for every box opponent has
         score -= 10*scores[otherIndex]
+        # Evaluation needs to be different depending on whose turn it is.
         # If it's our turn next then we want boxes to complete
         if game.currentPlayer == self.index:
             for i in range(game.height-1):

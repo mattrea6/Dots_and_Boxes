@@ -12,6 +12,10 @@ import random
 import math
 
 class MonteCarloPlayer(BasicPlayers.RandomPlayer):
+    """
+    This player implements Monte Carlo Tree Search. The search uses two supporting
+    classes, Monte Carlo Tree and Monte Carlo Node.
+    """
     def __init__(self, playerIndex, colour="red", timeLimit=2, c=1.4142):
         """
         Override for Monte Carlo Player.
@@ -19,74 +23,114 @@ class MonteCarloPlayer(BasicPlayers.RandomPlayer):
             playerIndex(int): player index in game
             colour(str): Colour for the UI to render. Defaults to Red
             timeLimit(int/float): Time limit in seconds for moves
+            c(float): Exploration parameter for MCTS
         """
         self.index = playerIndex
         self.colour = colour
-        self.timeLimit = timeLimit
-        self.c = c
+        self.tree = MonteCarloTree(playerIndex, timeLimit, c)
 
     def chooseMove(self, game):
         """
         Monte Carlo choose move
         """
-        move = self.monteCarlo(game)
+        # first we need to update the tree with the new game state
+        self.tree.update(game)
+        # Then get the next move to be made.
+        move = self.tree.nextMove()
         if game.is_legal_move(move):
             return move
         else:
             return self.randomMove(game)
 
-        # main function for the Monte Carlo Tree Search
-    def monteCarlo(self, game):
+    def __str__(self):
+        return "{}_monty".format(self.index)
+
+class MonteCarloTree:
+    def __init__(self, index, timeLimit=2, c=1.4142):
         """
-        Main function for monte carlo tree search. Sets up the tree search and
-        then loops until time is up, randomly playing games.
-        Args:
-            game(Game): Game state to made move for.
-        Retuns:
-            move
+        Monte Carlo Tree class
         """
-        root = MonteCarloNode(self.index, game, (0,0,0), "Root", self.c)
-        root.makeChildren()
-        current = root.chooseChild()
-        #print("Starting Monte Carlo Method.")
-        no_trials = 0
+        self.index = index
+        self.c = c
+        self.timeLimit = timeLimit
+        self.root = None
+
+    def update(self, game):
+        """
+        Updates the tree with a new game.
+        This method is a switch for startTree and newRoot
+        """
+        if self.root is None:
+            self.startTree(game)
+        else:
+            self.newRoot(game)
+
+    def startTree(self, game):
+        """
+        Create the initial root node and start the tree.
+        """
+        self.root = MonteCarloNode(self.index, game, (0,0,0), "Root", self.c)
+        self.root.makeChildren()
+
+    def nextMove(self):
+        """
+        Choose the next best move from the root node.
+        """
+        #print("Choosing move. root.n = {}".format(self.root.n))
+        current = self.root.chooseChild()
+        no_iterations = 0
         startTime = time.time()
         timeTaken = time.time() - startTime
-        # While we haven't exceeded the time limit
-        """
         while timeTaken <= self.timeLimit:
             if current.game.is_finished() or current.n == 0:
                 # the rollout method also handles the backpropagation step.
                 current.rollout()
                 # after rollout reset to root.
-                current = root
-                no_trials += 1
+                current = self.root
+                no_iterations += 1
                 # recalculating here saves a little bit of time.
                 timeTaken = time.time() - startTime
             # the next node is the best child of the current node.
             current = current.chooseChild()
             # that's it that's the algorithm
+        # pick the best child and make this the new root node.
+        #print("Chosen move. root.n = {}".format(self.root.n))
+        bestChild = self.root.chooseChild()
+        self.root = bestChild
+        self.root.parent = None
+        # then return that move
+        #print("New root.n = {}".format(self.root.n))
+        return self.root.move
+
+    def newRoot(self, game):
         """
-        while time.time() - startTime <= self.timeLimit:
-            if current.children:
-                current = current.chooseChild()
+        Find the new root of the tree given a new gamestate, or make a new root.
+        Args:
+            game(Game): Gamestate to search for
+        """
+        newRoot = self.root
+        # this finds which moves have been made between the root and the new state.
+        movesMade = game.movesMade[len(self.root.game.movesMade):len(game.movesMade)]
+        # go through each move in order
+        for move in movesMade:
+            if newRoot.children:
+                # if this node has children, find the one that corresponds to the move made
+                for child in newRoot.children:
+                    if child.move == move:
+                        # then make this the new root node
+                        newRoot = child
+                        #if newRoot.game == game:
+                            #print("Found new root")
+                        break
             else:
-                current.rollout()
-                current.makeChildren()
-                current = root
-            no_trials += 1
+                #print("Building new root")
+                # if the node doesn't have children then make a fresh new root node
+                newRoot = MonteCarloNode(self.index, game, (0,0,0), "NewRoot", self.c)
+                newRoot.makeChildren()
+                break
 
-
-        bestChild = root.chooseChild()
-        bestMove = root.chooseChild().move
-        #print("Child chosen. {} trials performed".format(no_trials))
-        #root.print_node()
-        #print("Chosen move {}".format(bestMove))
-        #print("Monte Carlo returning move {}".format(bestMove))
-        return bestMove
-
-    def __str__(self):
-        return "{}_monty".format(self.index)
+        self.root = newRoot
+        self.root.parent = None
 
 class MonteCarloNode:
     def __init__(self, playerIndex, game, move, name, c=1.4142, parent=None):
@@ -166,15 +210,17 @@ class MonteCarloNode:
         Rollout will take the state and play random moves until the game is finished.
         The end state will then be evaluated and backpropagated.
         """
-        copyGame = self.game.get_copy()
+        copyGame = self.game.get_copy() 
         moves = copyGame.get_all_legal_moves()
         random.shuffle(moves)
         for move in moves:
             copyGame.take_turn(move)
-        if copyGame.winner() == self.playerIndex:
-            eval = 10
-        else:
-            eval = 0
+        # 1 + True = 2. 1 + False = 1
+        eval = (copyGame.winner() == self.playerIndex)
+        #if copyGame.winner() == self.playerIndex:
+        #    eval = 1
+        #else:
+        #    eval = 0
         # we then call our own backpropagate method to send the values up the tree
         self.backpropagate(eval)
 

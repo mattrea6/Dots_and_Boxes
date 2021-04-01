@@ -112,7 +112,8 @@ class Game:
             self.grid[move[0]][move[1]][move[2]].draw(self.currentPlayer)
             # Take the move made out of the list of legal moves.
             self.legalMoves.remove(move)
-            self.movesMade.append("{} - {}".format(self.currentPlayer, move))
+            self.movesMade.append(move)
+            #self.movesMade.append("{} - {}".format(self.currentPlayer, move))
             #print("Made move {}".format(move))
             # Check the boxes associated with the line claimed.
             if not self.check_boxes_for_line(move):
@@ -280,7 +281,7 @@ class Game:
             with open(filename, mode) as outfile:
                 outfile.write(gameStr+"\n")
                 for line in self.movesMade:
-                    outfile.write(line+"\n")
+                    outfile.write(str(line)+"\n")
                 outfile.write(scoresStr+"\n")
         except Exception as e:
             print("Saving to results file {} failed.".format(filename))
@@ -335,12 +336,22 @@ class Game:
         o = 0
         for i in range(self.height):
             for j in range(self.width-1):
-                if self.grid[o][i][j].owner != other.grid[o][i][j].owner:
+                if self.grid[o][i][j].owner == 0 and other.grid[o][i][j].owner != 0:
+                    return False
+                if self.grid[o][i][j].owner != 0 and other.grid[o][i][j].owner == 0:
                     return False
         o = 1
         for i in range(self.width):
             for j in range(self.height-1):
-                if self.grid[o][i][j].owner != other.grid[o][i][j].owner:
+                if self.grid[o][i][j].owner == 0 and other.grid[o][i][j].owner != 0:
                     return False
+                if self.grid[o][i][j].owner != 0 and other.grid[o][i][j].owner == 0:
+                    return False
+
+        for i in range(self.height-1):
+            for j in range(self.width-1):
+                if self.boxes[i][j].owner != other.boxes[i][j].owner:
+                    return False
+
 
         return True

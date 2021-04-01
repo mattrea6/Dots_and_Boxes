@@ -173,6 +173,9 @@ class ExperimentFrame(QWidget):
         f.close()
         #self.hideAllElements()
         for i in range(self.numTrials.value()):
+            playerOne = self.playerFactory.makePlayer(self.playerOneDropdown.currentText(), 1, self.p1Col)
+            playerTwo = self.playerFactory.makePlayer(self.playerTwoDropdown.currentText(), 2, self.p2Col)
+            players = [playerOne, playerTwo]
             self.updateFrame(i, resultsFilename)
             self.gf = GameGUI.GameFrame(width, height, players, resultsFilename)
             print("Current Scores:")
@@ -186,15 +189,21 @@ def main(trials=100,height=3,width=3):
     ex = ExperimentFrame()
     sys.exit(app.exec_())
 
-def c_experiment(no_trials=100, timeLimit=2):
+def c_experiment(no_trials=100, timeLimit=5):
     """
     Runs an experiment with MonteCarloPlayer, altering the value for c each time.
     """
     experiment_filenames = []
-    filename_base = "Results\\1_random_2_monty_3x3_c-{}.txt"
+    setName = "random-v-monty2-29-03"
+    filename_base = "Results\\"+setName+"\\1_random_2_monty_3x3_c-{}.txt"
     playerFactory = PlayerFactory.PlayerFactory()
-    # values from 0 to 5 in increments of 0.1
-    c_values = [x/10 for x in range(0,51)]
+    try:
+        os.mkdir("Results\\"+setName)
+    except FileExistsError:
+        pass
+    # values from 1.0 to 5.0 in increments of 0.2
+    c_values = [x/10 for x in range(10,51,2)]
+    # also try root 2 just for kicks.
     c_values.append(math.sqrt(2))
     for c in c_values:
         # create results file
@@ -204,12 +213,12 @@ def c_experiment(no_trials=100, timeLimit=2):
         f.close()
         # create players
         randomPlayer = playerFactory.makePlayer("Random Player", 1, "red")
-        monteCarloPlayer = MonteCarloPlayer(2, "red", timeLimit, c)
-        players = [randomPlayer, monteCarloPlayer]
         print("\nStarting trail with c={}".format(c))
         # run game no_trials amount of times
         for i in range(no_trials):
             game = Game(3,3)
+            monteCarloPlayer = playerFactory.makePlayer("Monte Carlo Player", 2, "red", timeLimit=timeLimit, c=c)
+            players = [randomPlayer, monteCarloPlayer]
             while not game.is_finished():
                 player = players[game.currentPlayer-1]
                 move = player.chooseMove(game.get_copy())
@@ -219,9 +228,7 @@ def c_experiment(no_trials=100, timeLimit=2):
             game.print_grid()
             ReadStatistics.get_scores(experiment_filename)
     print("\n\nAll trials completed.")
-    for fn in experiment_filenames:
-        print("\nResults for file: {}".format(fn))
-        ReadStatistics.get_scores(fn)
+    ReadStatistics.compare(experiment_filenames)
 
 
 if __name__ == '__main__':
