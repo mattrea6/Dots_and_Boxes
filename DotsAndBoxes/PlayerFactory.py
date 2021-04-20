@@ -17,7 +17,7 @@ class PlayerFactory:
     def __init__(self):
         self.playerTypes = ["Human Player", "Random Player", "In order player", "Minimax Player", "Monte Carlo Player"]
 
-    def makePlayer(self, playerType, index, colour="red", timeLimit=1, maxDepth=20, c=1.4):
+    def makePlayer(self, playerType, index, colour="red", timeLimit=None, maxDepth=20, c=1.4):
         """
         Factory method for returning correct player type.
         If for some reason playerType isn't in the internal list, just return a
@@ -41,6 +41,12 @@ class PlayerFactory:
         elif playerType == "In order player":
             return MovesInOrder(index, colour)
         elif playerType == "Minimax Player":
+            if timeLimit is None:
+                # switch so that different players have different default time limits.
+                timeLimit = 1
             return MinimaxPlayer(index, colour, timeLimit, maxDepth)
         elif playerType == "Monte Carlo Player":
+            if timeLimit is None:
+                # switch so that different players have different default time limits.
+                timeLimit = 5
             return MonteCarloPlayer(index, colour, timeLimit, c)

@@ -95,14 +95,14 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
         for move in moves:
             # Make the move and get the next state of the game.
             copyGame = self.makeMove(game, move)
-            if copyGame.currentPlayer == currentPlayer:
+            #if copyGame.currentPlayer == currentPlayer:
                 # If the current player hasn't changed then a box was claimed.
                 # Don't increment the depth
                 # This allows the player to see further forward when capturing
                 # but adds a little to the search time.
-                newDepth = depth
-            else:
-                newDepth = depth-1
+            #    newDepth = depth
+            #else:
+            newDepth = depth-1
             # recursive call
             score = self.getScore(copyGame, newDepth, alpha, beta)
             # Different actions depending on wether this is a min node or max node

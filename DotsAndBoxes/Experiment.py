@@ -112,6 +112,7 @@ class ExperimentFrame(QWidget):
         self.numTrials.resize(self.numTrials.sizeHint())
         self.numTrials.move(190, 250)
         self.numTrials.setRange(10, 1000)
+        self.numTrials.setValue(10)
         self.elements.append(self.numTrials)
 
         # Button to start game
@@ -177,7 +178,8 @@ class ExperimentFrame(QWidget):
             playerTwo = self.playerFactory.makePlayer(self.playerTwoDropdown.currentText(), 2, self.p2Col)
             players = [playerOne, playerTwo]
             self.updateFrame(i, resultsFilename)
-            self.gf = GameGUI.GameFrame(width, height, players, resultsFilename)
+            game = Game(width, height)
+            self.gf = GameGUI.GameFrame(game, players, resultsFilename)
             print("Current Scores:")
             ReadStatistics.get_scores(resultsFilename)
         print("Trials finished!")

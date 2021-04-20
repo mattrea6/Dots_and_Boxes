@@ -1,10 +1,11 @@
 import sys
 from PyQt5.QtWidgets import (QWidget, QToolTip,
     QPushButton, QApplication, QLabel, QSpinBox,
-    QComboBox, QColorDialog)
+    QComboBox, QColorDialog, QDoubleSpinBox, QRadioButton)
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from Game import Game
+from GameVariants import SwedishGame, RandomGame
 import PlayerFactory
 
 class StartFrame(QWidget):
@@ -60,6 +61,7 @@ class StartFrame(QWidget):
         self.playerOneDropdown = QComboBox(self)
         self.playerOneDropdown.resize(100, 20)
         self.playerOneDropdown.move(170, 180)
+        self.playerOneDropdown.currentIndexChanged.connect(self.playerPickerChanged)
         # Create the colour picker button for player colour
         self.playerOneColour = QPushButton("Colour", self)
         self.playerOneColour.resize(self.playerOneColour.sizeHint())
@@ -67,29 +69,166 @@ class StartFrame(QWidget):
         self.playerOneColour.setStyleSheet("background-color: {}".format(self.p1Col))
         self.playerOneColour.clicked.connect(self.playerOneColourPicker)
 
+        # These are the optional boxes that should only appear for specific player types.
+        self.playerOneTimeLabel = QLabel("P1 Time Limit:", self)
+        self.playerOneTimeLabel.resize(0,0)
+        self.playerOneTimeLabel.move(100, 208)
+
+        self.playerOneTimeLimit = QDoubleSpinBox(self)
+        self.playerOneTimeLimit.resize(0,0)
+        self.playerOneTimeLimit.move(170, 205)
+        self.playerOneTimeLimit.setRange(0.2, 20.0)
+        self.playerOneTimeLimit.setSingleStep(0.1)
+
+        self.playerOneMaxDepthLabel = QLabel("P1 Max Depth:", self)
+        self.playerOneMaxDepthLabel.resize(0,0)
+        self.playerOneMaxDepthLabel.move(240, 208)
+
+        self.playerOneMaxDepth = QSpinBox(self)
+        self.playerOneMaxDepth.resize(0,0)
+        self.playerOneMaxDepth.move(315, 205)
+        self.playerOneMaxDepth.setRange(2, 50)
+        self.playerOneMaxDepth.setValue(15)
+
+        self.playerOneCValueLabel = QLabel("P1 C Value:", self)
+        self.playerOneCValueLabel.resize(0,0)
+        self.playerOneCValueLabel.move(240, 208)
+
+        self.playerOneCValue = QDoubleSpinBox(self)
+        self.playerOneCValue.resize(0,0)
+        self.playerOneCValue.move(300, 205)
+        self.playerOneCValue.setRange(0.0, 10.0)
+        self.playerOneCValue.setSingleStep(0.05)
+
+
         playerTwoLabel = QLabel("Player Two:", self)
         playerTwoLabel.resize(playerTwoLabel.sizeHint())
-        playerTwoLabel.move(100, 203)
+        playerTwoLabel.move(100, 243)
         self.playerTwoDropdown = QComboBox(self)
         self.playerTwoDropdown.resize(100, 20)
-        self.playerTwoDropdown.move(170, 200)
+        self.playerTwoDropdown.move(170, 240)
+        self.playerTwoDropdown.currentIndexChanged.connect(self.playerPickerChanged)
         self.playerTwoColour = QPushButton("Colour", self)
         self.playerTwoColour.resize(self.playerTwoColour.sizeHint())
-        self.playerTwoColour.move(280, 200)
+        self.playerTwoColour.move(280, 240)
         self.playerTwoColour.setStyleSheet("background-color: {}".format(self.p2Col))
         self.playerTwoColour.clicked.connect(self.playerTwoColourPicker)
+
+        self.playerTwoTimeLabel = QLabel("P2 Time Limit:", self)
+        self.playerTwoTimeLabel.resize(0,0)
+        self.playerTwoTimeLabel.move(100, 268)
+
+        self.playerTwoTimeLimit = QDoubleSpinBox(self)
+        self.playerTwoTimeLimit.resize(0,0)
+        self.playerTwoTimeLimit.move(170, 265)
+        self.playerTwoTimeLimit.setRange(0.2, 20.0)
+        self.playerTwoTimeLimit.setSingleStep(0.1)
+
+        self.playerTwoMaxDepthLabel = QLabel("P2 Max Depth:", self)
+        self.playerTwoMaxDepthLabel.resize(0,0)
+        self.playerTwoMaxDepthLabel.move(240, 268)
+
+        self.playerTwoMaxDepth = QSpinBox(self)
+        self.playerTwoMaxDepth.resize(0,0)
+        self.playerTwoMaxDepth.move(315, 265)
+        self.playerTwoMaxDepth.setRange(2, 50)
+        self.playerTwoMaxDepth.setValue(15)
+
+        self.playerTwoCValueLabel = QLabel("P2 C Value:", self)
+        self.playerTwoCValueLabel.resize(0,0)
+        self.playerTwoCValueLabel.move(240, 268)
+
+        self.playerTwoCValue = QDoubleSpinBox(self)
+        self.playerTwoCValue.resize(0,0)
+        self.playerTwoCValue.move(300, 265)
+        self.playerTwoCValue.setRange(0.0, 10.0)
+        self.playerTwoCValue.setSingleStep(0.05)
+
         # Populate both dropdowns with the player types in Player Factory.
         for player in self.playerFactory.playerTypes:
             self.playerOneDropdown.addItem(player)
             self.playerTwoDropdown.addItem(player)
 
+        variantLabel = QLabel("Select Game Variant:", self)
+        variantLabel.resize(variantLabel.sizeHint())
+        variantLabel.move(100, 300)
+
+        self.normalGameRadio = QRadioButton("Normal Game", self)
+        self.normalGameRadio.move(100, 320)
+        self.normalGameRadio.setChecked(True)
+        self.swedishGameRadio = QRadioButton("Swedish Game", self)
+        self.swedishGameRadio.move(190, 320)
+        self.randomGameRadio = QRadioButton("Random Game", self)
+        self.randomGameRadio.move(285, 320)
+
         # Button to start game
         startButton = QPushButton('Start Game', self)
         startButton.resize(startButton.sizeHint())
-        startButton.move(100, 250)
+        startButton.move(100, 350)
         startButton.clicked.connect(self.startGame)
 
         self.show()
+
+    def playerPickerChanged(self):
+        """
+        Callback for when the value of a player type picker changes.
+        """
+        p1type = self.playerOneDropdown.currentText()
+        p2type = self.playerTwoDropdown.currentText()
+
+        if p1type == "Minimax Player":
+            # If dropdown is minimax player, resize the minimax options to their correct sizes
+            self.playerOneTimeLabel.resize(self.playerOneTimeLabel.sizeHint())
+            self.playerOneTimeLimit.resize(50, 20)
+            self.playerOneMaxDepthLabel.resize(self.playerOneMaxDepthLabel.sizeHint())
+            self.playerOneMaxDepth.resize(40, 20)
+
+            self.playerOneCValueLabel.resize(0,0)
+            self.playerOneCValue.resize(0,0)
+        elif p1type == "Monte Carlo Player":
+            # If it is monte carlo player, resize these relevant options
+            self.playerOneTimeLabel.resize(self.playerOneTimeLabel.sizeHint())
+            self.playerOneTimeLimit.resize(50, 20)
+            self.playerOneCValueLabel.resize(self.playerOneCValueLabel.sizeHint())
+            self.playerOneCValue.resize(50, 20)
+
+            self.playerOneMaxDepthLabel.resize(0,0)
+            self.playerOneMaxDepth.resize(0,0)
+        else:
+            # If it is neither of those, make all of these elements invisible.
+            self.playerOneTimeLabel.resize(0,0)
+            self.playerOneTimeLimit.resize(0,0)
+            self.playerOneCValueLabel.resize(0,0)
+            self.playerOneCValue.resize(0,0)
+            self.playerOneMaxDepthLabel.resize(0,0)
+            self.playerOneMaxDepth.resize(0,0)
+
+        if p2type == "Minimax Player":
+            # If dropdown is minimax player, resize the minimax options to their correct sizes
+            self.playerTwoTimeLabel.resize(self.playerTwoTimeLabel.sizeHint())
+            self.playerTwoTimeLimit.resize(50, 20)
+            self.playerTwoMaxDepthLabel.resize(self.playerTwoMaxDepthLabel.sizeHint())
+            self.playerTwoMaxDepth.resize(40, 20)
+
+            self.playerTwoCValueLabel.resize(0,0)
+            self.playerTwoCValue.resize(0,0)
+        elif p2type == "Monte Carlo Player":
+            # If it is monte carlo player, resize these relevant options
+            self.playerTwoTimeLabel.resize(self.playerTwoTimeLabel.sizeHint())
+            self.playerTwoTimeLimit.resize(50, 20)
+            self.playerTwoCValueLabel.resize(self.playerTwoCValueLabel.sizeHint())
+            self.playerTwoCValue.resize(50, 20)
+
+            self.playerTwoMaxDepthLabel.resize(0,0)
+            self.playerTwoMaxDepth.resize(0,0)
+        else:
+            # If it is neither of those, make all of these elements invisible.
+            self.playerTwoTimeLabel.resize(0,0)
+            self.playerTwoTimeLimit.resize(0,0)
+            self.playerTwoCValueLabel.resize(0,0)
+            self.playerTwoCValue.resize(0,0)
+            self.playerTwoMaxDepthLabel.resize(0,0)
+            self.playerTwoMaxDepth.resize(0,0)
 
     def playerOneColourPicker(self):
         """
@@ -110,16 +249,41 @@ class StartFrame(QWidget):
         Starts game. Creates two players with values from inputs using the Player Factory class.
         Then creates game and sends it options and players. Finally closes itself.
         """
-        playerOne = self.playerFactory.makePlayer(self.playerOneDropdown.currentText(), 1, self.p1Col)
-        playerTwo = self.playerFactory.makePlayer(self.playerTwoDropdown.currentText(), 2, self.p2Col)
+        playerOne = self.playerFactory.makePlayer(
+            self.playerOneDropdown.currentText(),
+            1,
+            self.p1Col,
+            self.playerOneTimeLimit.value(),
+            self.playerOneMaxDepth.value(),
+            self.playerOneCValue.value()
+            )
+
+        playerTwo = self.playerFactory.makePlayer(
+            self.playerTwoDropdown.currentText(),
+            2,
+            self.p2Col,
+            self.playerTwoTimeLimit.value(),
+            self.playerTwoMaxDepth.value(),
+            self.playerTwoCValue.value()
+            )
+
         players = [playerOne, playerTwo]
-        self.gf = GameFrame(self.widthInput.value(), self.heightInput.value(), players)
+
+        if self.normalGameRadio.isChecked():
+            game = Game(self.widthInput.value(), self.heightInput.value())
+        elif self.swedishGameRadio.isChecked():
+            game = SwedishGame(self.widthInput.value(), self.heightInput.value())
+        elif self.randomGameRadio.isChecked():
+            game = RandomGame(self.widthInput.value(), self.heightInput.value())
+        else:
+            game = Game(self.widthInput.value(), self.heightInput.value())
+        self.gf = GameFrame(game, players)
         self.close()
 
 
 class GameFrame(QWidget):
 
-    def __init__(self, width, height, players, filename=False):
+    def __init__(self, game, players, filename=False):
         """
         GameFrame is a QWidget that can also hold and read a Game instance, and a list
         of current players in the game.
@@ -132,10 +296,11 @@ class GameFrame(QWidget):
         self.players = players
         self.p1Colour = self.players[0].colour
         self.p2Colour = self.players[1].colour
-        self.width = width
-        self.height = height
+        self.blockedColour = "Black"
+        self.game = game
+        self.width = game.width
+        self.height = game.height
         self.resultsFilename = filename
-        self.game = Game(width, height)
         self.boxSize = 50
         self.lineWidth = 10
         self.initUI()
@@ -230,7 +395,8 @@ class GameFrame(QWidget):
 
         self.show()
         QApplication.processEvents()
-        self.mainLoop()
+        self.updateGame()
+        #self.mainLoop()
 
     def mainLoop(self):
         """
@@ -263,6 +429,25 @@ class GameFrame(QWidget):
         # Update turn label
         self.titleLabel.setText("Player {}s turn!".format(self.game.currentPlayer))
         self.titleLabel.resize(self.titleLabel.sizeHint())
+        # update line colours
+        for i in range(self.height):
+            for j in range(self.width-1):
+                line_owner = self.game.grid[0][i][j].owner
+                if line_owner == 1:
+                    self.buttonGrid[0][i][j].setStyleSheet("background-color: {}".format(self.p1Colour))
+                elif line_owner == 2:
+                    self.buttonGrid[0][i][j].setStyleSheet("background-color: {}".format(self.p2Colour))
+                elif line_owner == 3:
+                    self.buttonGrid[0][i][j].setStyleSheet("background-color: {}".format(self.blockedColour))
+        for i in range(self.width):
+            for j in range(self.height-1):
+                line_owner = self.game.grid[1][i][j].owner
+                if line_owner == 1:
+                    self.buttonGrid[1][i][j].setStyleSheet("background-color: {}".format(self.p1Colour))
+                elif line_owner == 2:
+                    self.buttonGrid[1][i][j].setStyleSheet("background-color: {}".format(self.p2Colour))
+                elif line_owner == 3:
+                    self.buttonGrid[1][i][j].setStyleSheet("background-color: {}".format(self.blockedColour))
         # Update grid for box numbers
         for i in range(self.height-1):
             for j in range(self.width-1):
