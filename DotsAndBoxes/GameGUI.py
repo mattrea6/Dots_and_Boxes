@@ -28,44 +28,45 @@ class StartFrame(QWidget):
         self.setGeometry(700, 200, 600, 450)
         # Title label
         titleLabel = QLabel("Dots & Boxes", self)
+        titleLabel.setFont(QFont('Arial', 20))
         titleLabel.resize(titleLabel.sizeHint())
-        titleLabel.move(100, 50)
+        titleLabel.move(215, 25)
         # Welcome label
         instLabel = QLabel("Choose board size and players, then click 'Start Game'!", self)
         instLabel.resize(instLabel.sizeHint())
-        instLabel.move(100, 65)
+        instLabel.move(175, 65)
         # Input for size
         # Two number input boxes
         widthLabel = QLabel("Width:", self)
         widthLabel.resize(widthLabel.sizeHint())
-        widthLabel.move(100, 103)
+        widthLabel.move(180, 103)
         self.widthInput = QSpinBox(self)
         self.widthInput.resize(self.widthInput.sizeHint())
-        self.widthInput.move(150, 100)
+        self.widthInput.move(220, 100)
         self.widthInput.setRange(3, 10)
 
         heightLabel = QLabel("Height:", self)
         heightLabel.resize(heightLabel.sizeHint())
-        heightLabel.move(100, 123)
+        heightLabel.move(310, 103)
         self.heightInput = QSpinBox(self)
         self.heightInput.resize(self.heightInput.sizeHint())
-        self.heightInput.move(150, 120)
+        self.heightInput.move(350, 100)
         self.heightInput.setRange(3, 10)
 
         # Input for players. Dropdowns filled with values from factory
         # Create label first
         playerOneLabel = QLabel("Player One:", self)
         playerOneLabel.resize(playerOneLabel.sizeHint())
-        playerOneLabel.move(100, 183)
+        playerOneLabel.move(170, 183)
         # Then create the dropdown and size it
         self.playerOneDropdown = QComboBox(self)
         self.playerOneDropdown.resize(100, 20)
-        self.playerOneDropdown.move(170, 180)
+        self.playerOneDropdown.move(240, 180)
         self.playerOneDropdown.currentIndexChanged.connect(self.playerPickerChanged)
         # Create the colour picker button for player colour
         self.playerOneColour = QPushButton("Colour", self)
         self.playerOneColour.resize(self.playerOneColour.sizeHint())
-        self.playerOneColour.move(280, 180)
+        self.playerOneColour.move(350, 180)
         self.playerOneColour.setStyleSheet("background-color: {}".format(self.p1Col))
         self.playerOneColour.clicked.connect(self.playerOneColourPicker)
 
@@ -153,13 +154,13 @@ class StartFrame(QWidget):
         variantLabel.resize(variantLabel.sizeHint())
         variantLabel.move(100, 300)
 
-        self.normalGameRadio = QRadioButton("Normal Game", self)
+        self.normalGameRadio = QRadioButton("American Game", self)
         self.normalGameRadio.move(100, 320)
         self.normalGameRadio.setChecked(True)
         self.swedishGameRadio = QRadioButton("Swedish Game", self)
-        self.swedishGameRadio.move(190, 320)
+        self.swedishGameRadio.move(200, 320)
         self.randomGameRadio = QRadioButton("Random Game", self)
-        self.randomGameRadio.move(285, 320)
+        self.randomGameRadio.move(295, 320)
 
         # Button to start game
         startButton = QPushButton('Start Game', self)
@@ -458,8 +459,11 @@ class GameFrame(QWidget):
                     self.boxes[i][j].setStyleSheet("background-color: {}".format(self.players[owner-1].colour))
         # Force the GUI to update. This is for games with no human player.
         QApplication.processEvents()
+        # If the game isn't done yet, go back to the main loop.
+        if not self.game.is_finished():
+            self.mainLoop()
         # If the game is finished, set the winner label
-        if self.game.is_finished():
+        else:
             # Hide title label
             self.titleLabel.resize(0,0)
             # Update the string that says who won.
@@ -478,8 +482,6 @@ class GameFrame(QWidget):
             if self.resultsFilename:
                 self.game.save_statistics(self.resultsFilename, "a+")
                 self.close()
-        else:
-            self.mainLoop()
 
     def lineClicked(self):
         """

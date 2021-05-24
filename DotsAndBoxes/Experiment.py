@@ -232,6 +232,51 @@ def c_experiment(no_trials=100, timeLimit=5):
     print("\n\nAll trials completed.")
     ReadStatistics.compare(experiment_filenames)
 
+def tournament():
+    playerFactory = PlayerFactory.PlayerFactory()
+    # get all player types except human
+    playerTypes = playerFactory.playerTypes.copy()[1:]
+    filenameBase = "Results\\rand-ord-19-05\\{}"
+    # set up experiment parameters
+    boardSizes = [(3, 3), (4, 4), (5, 5), (6, 6)]
+    noTrials = 10000
+    # go through all sizes
+    for size in boardSizes:
+        height, width = size[0], size[1]
+        gameLength = ((width-1)*height) + ((height-1)*width)
+        # go through all the player types for player 1 and player 2
+        for p1type in ["Random Player", "Ordered Player"]:
+            for p2type in ["Random Player", "Ordered Player"]:
+                if p1type == "Ordered Player" and p2type == "Ordered Player":
+                    break
+                # set up the results file
+                p1name = p1type.split()[0]
+                p2name = p2type.split()[0]
+                filenameExp = "1_{}_2_{}_{}x{}.txt".format(p1name, p2name, height, width)
+                experimentFilename = filenameBase.format(filenameExp)
+                f = open(experimentFilename,"w+")
+                f.close()
+                print("Starting trials: {} vs {}".format(p1type, p2type))
+                # start game trials
+                for i in range(noTrials):
+                    game = Game(height, width)
+                    player1 = playerFactory.makePlayer(p1type, 1, timeLimit=5)
+                    player2 = playerFactory.makePlayer(p2type, 2, timeLimit=5)
+                    players = [player1, player2]
+                    print("Starting Trial {}...".format(i+1))
+                    while not game.is_finished():
+                        player = players[game.currentPlayer-1]
+                        move = player.chooseMove(game.get_copy())
+                        game.take_turn(move)
+                        progressMade = int((len(game.movesMade)/gameLength)*100)
+                        progressLeft = 100 - progressMade
+                        progress = "\r"+("-"*progressMade)+("|"*progressLeft)
+                        print(progress, end="", flush=True)
+                    game.save_statistics(experimentFilename, "a+")
+                    print("\rCompleted Trial {}.".format(i+1)+" "*90, flush=True)
+                print("Completed trials: {} vs {}".format(p1type, p2type))
+    print("\n\nAll trials completed.")
+
 
 if __name__ == '__main__':
     main()

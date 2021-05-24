@@ -171,11 +171,6 @@ class Game:
     def get_all_legal_moves(self, generate=False):
         """
         Finds all legal moves that can be made. Returns these as a list.
-        TODO: Change the order that moves are returned. Moves are evaluated by
-        MinimaxPlayer in the order returned from here. If the moves are returned
-        in a 'better' order then alpha-beta pruning will be more effective.
-        'best' order of moves is from the middle outwards as the middle moves
-        give player more control over the board.
         Args:
             generate(Bool): If True, force the game to make a new list of legal
                 moves
@@ -215,7 +210,6 @@ class Game:
         scores = [self.check_score(x) for x in range(1, self.maxPlayers+1)]
         #print("Game Finished!")
         #print("The winner is player {}, with {} boxes!".format(scores.index(max(scores))+1, max(scores)))
-
 
     def get_scores(self):
         """

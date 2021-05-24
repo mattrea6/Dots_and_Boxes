@@ -13,7 +13,7 @@ def main():
             ReadStatistics.get_scores(sys.argv[1])
         # this is to run specific experiment in Experiment.
         elif int(sys.argv[1]) == 2:
-            Experiment.c_experiment()
+            Experiment.tournament()
         # Launching with an extra argument will launch into expriment mode, where multiple games are played
         # >python DotsAndBoxes 1
         else:

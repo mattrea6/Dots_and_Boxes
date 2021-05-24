@@ -76,8 +76,10 @@ class MovesInOrder(PlayerBase):
     Plays all of the legal moves in the order they are returned.
     """
     def chooseMove(self, game):
-        #time.sleep(0.3)
-        return game.get_all_legal_moves()[0]
+        moves = game.get_all_legal_moves()
+        # Take a move from the middle of the list
+        ind = int(len(moves)*0.5)
+        return moves[ind]
 
     def __str__(self):
         return "{}_ordered".format(self.index)

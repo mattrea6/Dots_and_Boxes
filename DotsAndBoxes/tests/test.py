@@ -1,7 +1,8 @@
 import unittest
 import random
-from DotsAndBoxes import Game
-import DotsAndBoxes.MonteCarloPlayerTwo
+from DotsAndBoxes import Game, PlayerFactory
+import DotsAndBoxes.MonteCarloPlayer
+import DotsAndBoxes.MinimaxPlayer
 
 class TestGameMethods(unittest.TestCase):
     def test_create_game(self):
@@ -86,6 +87,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_legal_move_generation_start(self):
         """
+        Test new game legal move generation.
         Tests that generating a list of legal moves from the start of the game
         creates the expected list of moves.
         """
@@ -96,6 +98,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_legal_move_generation_middle(self):
         """
+        Test mid game legal move generation.
         Tests that generating a list of legal moves once moves have already been
         made in the game creates the expected list of moves.
         """
@@ -126,10 +129,11 @@ class TestGameMethods(unittest.TestCase):
 
     def test_bad_moves(self):
         """
-        Make sure program behaves correctly when bad inputs are given.
+        Ensure program behaves correctly when bad inputs are given.
         As long as it doesn't crash it passes the test.
         """
         g = Game.Game(4, 4)
+        l1 = g.get_all_legal_moves()
         g.take_turn((5, 5, 5))
         g.take_turn((0, 5, 5))
         g.take_turn(0)
@@ -137,9 +141,12 @@ class TestGameMethods(unittest.TestCase):
         g.take_turn(False)
         g.take_turn(None)
         g.take_turn(0.7)
+        l2 = g.get_all_legal_moves()
+        self.assertEqual(l1, l2)
 
     def test_game_rules(self):
         """
+        Test that the rules of the game are followed.
         There are specific rules that the game has that need to be tested to
         ensure they are working. These are:
             players take moves in turn
@@ -180,6 +187,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_box_checking(self):
         """
+        Test that the correct boxes are checked when move is made.
         When certain moves are made, certain boxes need to be checked.
         This test will look at the edge cases and ensure the correct boxes are
         checked & claimed.
@@ -222,10 +230,9 @@ class TestGameMethods(unittest.TestCase):
 
         self.assertTrue(g.is_finished())
 
-
     def test_game_finished(self):
         """
-        Check that a finished game is reliably finished
+        Test that a finished game is reliably finished.
         """
         # Make a game and make every move so the game is finished.
         g = Game.Game(4, 4)
@@ -252,7 +259,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_game_not_finished(self):
         """
-        Check that a game in progress does not return finished
+        Test that a game in progress does not display as finished.
         """
         # Make a game and make some moves but not all of them.
         g = Game.Game(4, 4)
@@ -264,7 +271,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_scores_correct(self):
         """
-        Make specific sequences of moves to check that scores are awarded as expected.
+        Test that scores are awarded as expected when moves are made.
         """
         g = Game.Game(3, 3)
         # Make these 6 specific moves
@@ -304,6 +311,18 @@ class TestGameMethods(unittest.TestCase):
         # check game is finished now.
         self.assertTrue(g.is_finished())
 
+    def test_winner(self):
+        """
+        Ensure the game declares the correct winner.
+        """
+        g = Game.Game(4, 4)
+        moves = g.get_all_legal_moves()
+        for m in moves:
+            g.take_turn(m)
+
+        self.assertEqual(g.get_scores(), {0: 0, 1: 0, 2: 9})
+        self.assertEqual(g.winner(), 2)
+
     def test_saving_scores(self):
         """
         Test that scores sent to save files are correctly saved.
@@ -341,7 +360,7 @@ class TestGameMethods(unittest.TestCase):
 
     def test_game_equality(self):
         """
-        Test that game objects' eq method work correctly.
+        Test that game objects' eqality method works correctly.
         """
         g1 = Game.Game(3,5)
         g2 = Game.Game(3,5)
@@ -376,17 +395,76 @@ class TestGameMethods(unittest.TestCase):
         self.assertTrue(g1 == g2)
         self.assertTrue(g1 == g3)
 
+class TestPlayerMethods(unittest.TestCase):
+    def test_playerfactory(self):
+        """
+        Test that players returned from the player factory are correct.
+        """
+        factory = PlayerFactory.PlayerFactory()
+
+        humanPlayer = factory.makePlayer("Human Player", 1)
+        randomPlayer = factory.makePlayer("Random Player", 1)
+        orderedPlayer = factory.makePlayer("Ordered Player", 1)
+        minmaxPlayer = factory.makePlayer("Minimax Player", 1)
+        monteCarloPlayer = factory.makePlayer("Monte Carlo Player", 1)
+        alsoHumanPlayer = factory.makePlayer("bad input", 1)
+
+        self.assertTrue(humanPlayer.isHuman())
+        self.assertEqual(humanPlayer.__str__(), "1_human")
+
+        self.assertTrue(alsoHumanPlayer.isHuman())
+        self.assertEqual(alsoHumanPlayer.__str__(), "1_human")
+
+        self.assertFalse(randomPlayer.isHuman())
+        self.assertEqual(randomPlayer.__str__(), "1_random")
+
+        self.assertFalse(orderedPlayer.isHuman())
+        self.assertEqual(orderedPlayer.__str__(), "1_ordered")
+
+        self.assertFalse(minmaxPlayer.isHuman())
+        self.assertEqual(minmaxPlayer.__str__(), "1_minimax")
+
+        self.assertFalse(monteCarloPlayer.isHuman())
+        self.assertEqual(monteCarloPlayer.__str__(), "1_monty")
+
+    def test_game_with_players(self):
+        """
+        Test that playing a game with two players works as intended.
+        Simulates playing a real game with two players taking alternate turns.
+        This logic is used in the same way to control game flow in the GUI.
+        """
+        # Make an instance of factory and game
+        factory = PlayerFactory.PlayerFactory()
+        game = Game.Game(4, 4)
+        # Then make two players to play the game
+        player1 = factory.makePlayer("Ordered Player", 1)
+        player2 = factory.makePlayer("Ordered Player", 2)
+        players = [player1, player2]
+        # Then play the game
+        while not game.is_finished():
+            # Read the current player from the game object
+            currentPlayer = players[game.currentPlayer-1]
+            # ask the current player for their move
+            move = currentPlayer.chooseMove(game.get_copy())
+            # send that move to the game object.
+            game.take_turn(move)
+            self.assertEqual(game.movesMade[-1], move)
+        # as the players are ordered we know the result.
+        self.assertTrue(game.is_finished())
+        self.assertEqual(game.winner(), 2)
+
+class TestMonteCarloMethods(unittest.TestCase):
     def test_monte_carlo_tree(self):
         """
-        Test the functionality of the Monte Carlo Tree class
+        Test the functionality of the Monte Carlo Tree class.
         """
-        mct = DotsAndBoxes.MonteCarloPlayerTwo.MonteCarloTree(1, 0.2)
+        mct = DotsAndBoxes.MonteCarloPlayer.MonteCarloTree(1, 0.2)
         g1 = Game.Game(4,4)
         g2 = g1.get_copy()
 
         self.assertIsNone(mct.root)
         mct.update(g1.get_copy())
-        self.assertIsInstance(mct.root, DotsAndBoxes.MonteCarloPlayerTwo.MonteCarloNode)
+        self.assertIsInstance(mct.root, DotsAndBoxes.MonteCarloPlayer.MonteCarloNode)
         self.assertTrue(g1 == g2)
         self.assertTrue(mct.root.game == g1)
         self.assertTrue(mct.root.game == g2)
@@ -410,17 +488,78 @@ class TestGameMethods(unittest.TestCase):
 
     def test_monte_carlo_node(self):
         """
-        Test monte carlo tree search node functionality.
+        Test the functionality of the Monte Carlo Node class.
         """
         g1 = Game.Game(4,4)
-        g2 = Game.Game(4,4)
 
+        n1 = DotsAndBoxes.MonteCarloPlayer.MonteCarloNode(1, g1, (0,0,0), "Root")
+        self.assertEqual(n1.t, 0.0)
+        self.assertEqual(n1.n, 0.0)
+        self.assertEqual(n1.children, [])
 
+        n2 = n1.chooseChild()
 
-    def test_(self):
+        self.assertIsInstance(n2, DotsAndBoxes.MonteCarloPlayer.MonteCarloNode)
+        self.assertEqual(n2.t, 0.0)
+        self.assertEqual(n2.n, 0.0)
+        self.assertEqual(n2.children, [])
+
+        n3 = n2.chooseChild()
+
+        self.assertIsInstance(n3, DotsAndBoxes.MonteCarloPlayer.MonteCarloNode)
+        self.assertEqual(n3.t, 0.0)
+        self.assertEqual(n3.n, 0.0)
+        self.assertEqual(n3.children, [])
+
+        n3.backpropagate(True)
+
+        self.assertEqual(n1.t, 1.0)
+        self.assertEqual(n2.t, 1.0)
+        self.assertEqual(n3.t, 1.0)
+        self.assertEqual(n1.n, 1.0)
+        self.assertEqual(n2.n, 1.0)
+        self.assertEqual(n3.n, 1.0)
+
+class TestMinimaxMethods(unittest.TestCase):
+    def test_minimax_selection(self):
         """
-        TESTS TO CREATE:
-        test players?
-            test monte carlo tree functions
+        Test the correct operation of the Minimax algorithm.
+        Minimax is deterministic. That means in a 3x3 game when Minimax goes first,
+        it should always pick the same move (1,1,1). If it doesn't then something is up.
+        This is with a time limit of one second and a max depth of 2.
         """
-        pass
+        g = Game.Game(3,3)
+        minimax = DotsAndBoxes.MinimaxPlayer.MinimaxPlayer(1, colour="red", timeLimit=1, maxDepth=2)
+        move = minimax.chooseMove(g.get_copy())
+        self.assertEqual(move, (1,1,1))
+
+    def test_minimax_evaluation(self):
+        """
+        Test that the Minimax evaluation function is consistent for both players.
+        """
+        # make a game and create a minimax for player 1 and player 2
+        g = Game.Game(3,3)
+        minimax1 = DotsAndBoxes.MinimaxPlayer.MinimaxPlayer(1)
+        minimax2 = DotsAndBoxes.MinimaxPlayer.MinimaxPlayer(2)
+        # make some moves to put the game in a known state
+        moves = [(1,0,0),(0,0,0),(0,0,1),(1,0,1),(0,2,0),(1,1,1)]
+        for m in moves:
+            g.take_turn(m)
+        # assert that the evaluations come out to the same but negative.
+        eval1 = minimax1.evaluate(g.get_copy())
+        eval2 = minimax2.evaluate(g.get_copy())
+        self.assertEqual(eval1, 4)
+        self.assertEqual(eval2, -4)
+        # take another turn - this is a capturing move
+        g.take_turn((0,1,0))
+        # assert that the evaluations come out to the same but negative.
+        eval1 = minimax1.evaluate(g.get_copy())
+        eval2 = minimax2.evaluate(g.get_copy())
+        self.assertEqual(eval1, 15)
+        self.assertEqual(eval2, -15)
+
+    # def test_(self):
+    #     """
+    #     Test template
+    #     """
+    #     pass

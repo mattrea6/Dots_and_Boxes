@@ -47,6 +47,7 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
         # the best move found so far. This is iterative deepening.
         while time.time() - startTime <= self.timeLimit and currentMaxDepth <= self.maxDepth:
             for move in moves:
+                # simulate the move and find the score
                 copyGame = self.makeMove(game, move)
                 score = self.getScore(copyGame, currentMaxDepth, -10000, 10000)
                 # The move that returns the greatest score gets chosen.
@@ -67,7 +68,7 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
 
     def getScore(self, game, depth, alpha, beta):
         """
-        The recursive part of the mintiimax algorithm. Implements alpha-beta pruning.
+        The recursive part of the minimax algorithm. Implements alpha-beta pruning.
         This will recursively search the tree to find the scores available at the bottom.
         Args:
             game(Game): game state to branch from.
@@ -95,16 +96,8 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
         for move in moves:
             # Make the move and get the next state of the game.
             copyGame = self.makeMove(game, move)
-            #if copyGame.currentPlayer == currentPlayer:
-                # If the current player hasn't changed then a box was claimed.
-                # Don't increment the depth
-                # This allows the player to see further forward when capturing
-                # but adds a little to the search time.
-            #    newDepth = depth
-            #else:
-            newDepth = depth-1
             # recursive call
-            score = self.getScore(copyGame, newDepth, alpha, beta)
+            score = self.getScore(copyGame, depth-1, alpha, beta)
             # Different actions depending on wether this is a min node or max node
             if maximise:
                 bestScore = max(score, bestScore)
@@ -112,9 +105,9 @@ class MinimaxPlayer(BasicPlayers.RandomPlayer):
             else:
                 bestScore = min(score, bestScore)
                 beta = min(beta, bestScore)
-                # Alpha - beta pruning.
-                if beta <= alpha:
-                    break
+            # Alpha - beta pruning.
+            if beta <= alpha:
+                break
         return bestScore
 
     def evaluate(self, game):

@@ -66,8 +66,9 @@ def count_winners(games):
             was = "were"
             draw = "draws"
         print("There {} {} {}.".format(was, draws, draw))
-    print("{} player winrate: {}%".format(names[0], 100*p1wins/(p1wins+p2wins+draws)))
-    print("{} player winrate: {}%".format(names[1], 100*p2wins/(p1wins+p2wins+draws)))
+    if p1wins+p2wins+draws > 0:
+        print("{} player winrate: {}%".format(names[0], 100*p1wins/(p1wins+p2wins+draws)))
+        print("{} player winrate: {}%".format(names[1], 100*p2wins/(p1wins+p2wins+draws)))
     return [p1wins, p2wins, draws]
 
 def get_scores(filename):
